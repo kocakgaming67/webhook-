@@ -1,667 +1,246 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Discord Webhook Manager — Full (fixed preview)</title>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Discord Webhook Manager — Touch First</title>
 <style>
-/* ---------- Base ---------- */
 :root{
-  --accent:#5865f2;
-  --card:#fff;
-  --muted:#888;
+  --accent:#5865f2; --accent-press:#4752c4;
+  --bg:#f5f7fb; --bg-dark:#0f1114;
+  --card:#fff; --card-dark:#16181f;
+  --text:#0e1015; --text-dark:#e6e6e6; --muted:#6b7280; --muted-dark:#9aa2b1;
+  --radius:14px; --shadow:0 8px 26px rgba(0,0,0,.08);
 }
 *{box-sizing:border-box}
-body{
-  font-family: "Segoe UI", Roboto, Arial, sans-serif;
-  background:#f0f2f6;
-  margin:0;
-  padding:16px;
-  color:#111;
+html,body{height:100%}
+body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial; background:var(--bg); color:var(--text);} 
+body.dark{ background:var(--bg-dark); color:var(--text-dark);} 
+
+.container{ max-width:980px; margin:12px auto 100px; padding:0 12px; }
+.card{ background:var(--card); border-radius:var(--radius); padding:16px; margin:12px 0; box-shadow:var(--shadow); border:1px solid rgba(0,0,0,.06); }
+body.dark .card{ background:var(--card-dark); box-shadow:none; border-color:rgba(255,255,255,.06);} 
+
+/* Tabs */
+.tabs{ display:flex; gap:8px; flex-wrap:wrap; }
+.tab{ padding:10px 14px; border-radius:999px; cursor:pointer; border:1px solid rgba(0,0,0,.1); }
+.tab.active{ background:var(--accent); color:#fff; border-color:transparent; font-weight:800; }
+.tab-panel{ display:none; }
+.tab-panel.active{ display:block; }
+
+/* Inputs */
+label{ display:block; margin:10px 0 6px; font-weight:800; }
+input[type="text"], input[type="url"], input[type="color"], textarea, select{ width:100%; padding:12px; border-radius:12px; border:1.5px solid #d7d7d9; background:transparent; color:inherit; font-size:16px; transition:border-color .15s, box-shadow .15s; }
+input:focus, textarea:focus, select:focus{ outline:none; border-color:var(--accent); box-shadow:0 6px 20px rgba(88,101,242,.18); }
+textarea{ min-height:110px; resize:vertical; }
+.helper{ color:var(--muted); font-size:12px; }
+body.dark .helper{ color:var(--muted-dark);} 
+
+/* Preview */
+.preview{ border:1px dashed rgba(0,0,0,.12); border-radius:12px; padding:12px; background:rgba(0,0,0,.02); max-height:220px; overflow:auto; }
+body.dark .preview{ border-color:rgba(255,255,255,.12); background:rgba(255,255,255,.04); }
+.msg{ display:flex; gap:10px; align-items:flex-start; }
+.msg .avatar{ width:42px; height:42px; border-radius:8px; object-fit:cover; }
+.msg .name{ font-weight:900; }
+.embed{ border-left:4px solid var(--accent); padding:8px 10px; margin-top:10px; border-radius:6px; background:rgba(0,0,0,.03); }
+body.dark .embed{ background:rgba(255,255,255,.05); }
+
+/* Toast / response / banner */
+.toast{ position:fixed; right:18px; bottom:90px; background:#111; color:#fff; padding:9px 12px; border-radius:10px; display:none; box-shadow:0 10px 30px rgba(0,0,0,.25); }
+.response{ margin-top:10px; padding:12px; border-radius:10px; font-weight:800; }
+.response.ok{ background:#dcfce7; color:#166534; }
+.response.err{ background:#fee2e2; color:#7f1d1d; }
+.banner{ background:#ffecb3; color:#333; padding:8px 10px; border-radius:10px; margin:10px 0; font-size:14px; display:none; }
+
+/* Floating Send (thumb reach) */
+.fab{
+  position:fixed; right:16px; bottom:16px; z-index:60;
+  background:linear-gradient(135deg,var(--accent),var(--accent-press)); color:#fff;
+  border:none; border-radius:999px; padding:14px 18px; font-weight:900; box-shadow:0 16px 40px rgba(88,101,242,.3); cursor:pointer;
+  display:flex; align-items:center; gap:10px; font-size:16px;
 }
-body.dark{
-  background:#0f1114;
-  color:#e6e6e6;
-}
+.fab:active{ transform:translateY(1px); }
 
-/* ---------- Header / sticky glass ---------- */
-.sticky-panel{
-  position: sticky;
-  top:12px;
-  z-index:999;
-  margin: 0 auto 12px;
-  max-width:960px;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  background: rgba(255,255,255,0.75);
-  border-radius:12px;
-  padding:12px;
-  box-shadow: 0 8px 25px rgba(0,0,0,0.12);
-  transition: background .25s;
-  display:flex;
-  gap:12px;
-  align-items:flex-start;
-  flex-wrap:wrap;
-}
-body.dark .sticky-panel{
-  background: rgba(24,24,27,0.6);
-}
+.btn-alt{ background:transparent; color:var(--accent); border:1.5px solid var(--accent); padding:8px 10px; border-radius:10px; cursor:pointer; }
 
-/* preview inside sticky */
-.preview-card{
-  background:var(--card);
-  border-radius:8px;
-  padding:10px;
-  min-width:220px;
-  max-width:600px;
-  border:1px solid rgba(0,0,0,0.06);
-  box-shadow: 0 3px 10px rgba(0,0,0,0.04);
-  transition: transform .18s, box-shadow .18s;
-}
-body.dark .preview-card{ background:#16161a; border-color: rgba(255,255,255,0.03); }
+.embed-card{ border:1px solid rgba(0,0,0,.08); border-radius:12px; padding:12px; margin:12px 0; }
+body.dark .embed-card{ border-color:rgba(255,255,255,.08);} 
 
-/* ---------- Buttons ---------- */
-.btn{
-  background:var(--accent);
-  color:#fff;
-  border:none;
-  padding:10px 14px;
-  border-radius:10px;
-  cursor:pointer;
-  font-weight:600;
-  display:inline-flex;
-  gap:8px;
-  align-items:center;
-  transition: transform .12s, box-shadow .12s, background .12s;
-}
-.btn:hover{ transform:translateY(-3px); box-shadow:0 8px 20px rgba(88,101,242,0.18); background:#4752c4; }
-
-/* small secondary */
-.btn-alt{
-  background:transparent;
-  color:var(--accent);
-  border:1px solid var(--accent);
-  padding:8px 10px;
-  border-radius:8px;
-}
-.btn-alt:hover{ background:rgba(88,101,242,0.06); transform:translateY(-2px); }
-
-/* ---------- Layout cards ---------- */
-.container{ max-width:960px; margin:14px auto 80px; }
-.card{
-  background:var(--card);
-  border-radius:12px;
-  padding:14px;
-  margin:12px 0;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.05);
-  transition: transform .15s, box-shadow .15s;
-}
-.card:hover{ transform:translateY(-4px); box-shadow: 0 14px 30px rgba(0,0,0,0.08); }
-body.dark .card{ background:#16161a; box-shadow:none; }
-
-/* header of collapsible card */
-.card-header{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:12px;
-  cursor:pointer;
-  padding:6px 0;
-}
-.card-title{ font-weight:700; color:var(--accent); }
-
-/* content */
-.card-body{ padding-top:10px; display:block; }
-
-/* inputs */
-label{ display:block; margin:10px 0 6px; font-weight:600; }
-input[type="text"], input[type="color"], textarea, select {
-  width:100%;
-  padding:10px;
-  border-radius:8px;
-  border:1.5px solid #d6d6d6;
-  font-size:15px;
-  background:transparent;
-  transition:border-color .15s, box-shadow .15s;
-}
-body.dark input, body.dark textarea, body.dark select{ border-color: rgba(255,255,255,0.06); background:transparent; color:inherit; }
-input:focus, textarea:focus, select:focus{ outline:none; border-color:var(--accent); box-shadow:0 6px 20px rgba(88,101,242,0.12); }
-textarea{ min-height:90px; resize:vertical; }
-
-/* inline rows */
-.row{ display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
-.row > *{ flex:1; min-width:0; }
-
-/* file preview list */
-.file-item{
-  padding:8px 10px; margin:6px 0; background:rgba(0,0,0,0.03); border-radius:8px;
-}
-body.dark .file-item{ background: rgba(255,255,255,0.03); }
-
-/* response */
-.response{ margin-top:10px; padding:10px; border-radius:8px; font-weight:700; }
-.response.ok{ background:#dff0e0; color:#1b6b2a; }
-.response.err{ background:#fbe0e0; color:#7a1b1b; }
-
-/* small helpers */
-.muted{ color:#777; font-size:13px; }
-.char-count{ text-align:right; font-size:13px; color:var(--muted); }
-
-/* small copy success */
-.toast{ position:fixed; right:18px; bottom:18px; background:#0b0; color:#fff; padding:8px 12px; border-radius:8px; display:none; }
-
-/* responsive */
-@media (max-width:720px){
-  .sticky-panel{ padding:10px; gap:8px; }
-  .preview-card{ min-width: 160px; max-width: 100%; }
-}
+@media (hover:hover){ .fab:hover{ filter:brightness(1.03);} }
+@media (max-width:720px){ .tab{ flex:1; text-align:center; } }
 </style>
 </head>
 <body>
 
-<!-- Sticky glass preview & actions -->
-<div class="sticky-panel" id="stickyPanel">
-  <div style="display:flex;flex-direction:column;gap:8px;">
-    <div style="display:flex;gap:8px;align-items:center;">
-      <button class="btn" id="sendBtn">🚀 Send</button>
-      <button class="btn-alt" id="copyJsonBtn" title="Copy message JSON">📋 Copy JSON</button>
-      <button class="btn-alt" id="testWebhookBtn" title="Send quick test">✔️ Test</button>
-    </div>
-    <div style="display:flex;gap:10px;align-items:center;">
-      <div class="muted">Webhook status:</div>
-      <div id="webhookStatus" class="muted">—</div>
-    </div>
-  </div>
-
-  <div class="preview-card" id="stickyPreview" aria-live="polite">
-    <!-- single previewContent element inside stickyPreview -->
-    <div id="previewContent"><strong>Preview</strong><div class="muted">Start typing...</div></div>
-  </div>
-</div>
+<!-- Floating action send button (bottom-right) -->
+<button id="fabSend" class="fab">🚀 Send</button>
 
 <div class="container">
-  <h1 style="text-align:center;color:var(--accent);margin:6px 0 6px;">Discord Webhook Manager</h1>
+  <h1 style="text-align:center; margin:8px 0 10px; color:var(--accent); font-size:28px; font-weight:900;">Discord Webhook Manager</h1>
+  <div id="banner" class="banner">⚠️ Running from a local file or preview app may block network requests (CORS). For live sending, open this file in a regular browser.</div>
 
-  <!-- Dark mode toggle small card -->
-  <div class="card" style="display:flex;justify-content:space-between;align-items:center;">
-    <div><strong>Theme</strong><div class="muted">Toggle dark UI for mobile night mode</div></div>
-    <div>
-      <label style="display:flex;gap:8px;align-items:center;">
-        <input type="checkbox" id="darkToggle" /> Dark Mode
-      </label>
+  <div class="card">
+    <div class="tabs" role="tablist">
+      <div class="tab active" data-tab="webhook" role="tab">Webhook</div>
+      <div class="tab" data-tab="message" role="tab">Message</div>
+      <div class="tab" data-tab="embeds" role="tab">Embeds</div>
+      <div class="tab" data-tab="settings" role="tab">Settings</div>
     </div>
-  </div>
 
-  <!-- Webhook card -->
-  <div class="card" id="webhookCard">
-    <div class="card-header" aria-hidden="true">
-      <div class="card-title">Webhook</div>
-      <div class="muted">Paste your webhook URL here</div>
-    </div>
-    <div class="card-body">
+    <section id="tab-webhook" class="tab-panel active" role="tabpanel">
       <label for="webhookURL">Webhook URL</label>
-      <input id="webhookURL" type="text" placeholder="https://discord.com/api/webhooks/..." />
-      <div style="display:flex;gap:8px;margin-top:8px;align-items:center;">
-        <button class="btn-alt" id="exportWebhookBtn">⬇ Export</button>
-        <label class="btn-alt" style="padding:8px 10px; cursor:pointer;">
-          ⬆ Import
-          <input id="importWebhookFile" type="file" accept="application/json" style="display:none;">
-        </label>
-        <div class="muted" id="importMsg" style="margin-left:auto;"></div>
-      </div>
-    </div>
-  </div>
+      <input id="webhookURL" type="url" placeholder="https://discord.com/api/webhooks/..." autocomplete="url"/>
+      <div class="helper">Paste the full Discord webhook URL for the channel you want to post to.</div>
+    </section>
 
-  <!-- Message card -->
-  <div class="card" id="messageCard">
-    <div class="card-header"><div class="card-title">Message</div><div class="muted">Content & attachments</div></div>
-    <div class="card-body">
+    <section id="tab-message" class="tab-panel" role="tabpanel">
       <label for="username">Username</label>
-      <input id="username" type="text" placeholder="Displayed username (optional)" />
+      <input id="username" type="text" placeholder="Displayed username (optional)"/>
+      <label for="avatarURL">Avatar URL</label>
+      <input id="avatarURL" type="url" placeholder="https://… (optional)"/>
+      <label for="content">Message</label>
+      <textarea id="content" placeholder="Type your message…"></textarea>
+    </section>
 
-      <label for="avatarURL">Avatar URL (optional)</label>
-      <input id="avatarURL" type="text" placeholder="Avatar URL (optional)" />
+    <section id="tab-embeds" class="tab-panel" role="tabpanel">
+      <button class="btn-alt" id="addEmbed">➕ Add Embed</button>
+      <div id="embeds"></div>
+    </section>
 
-      <label for="messageContent">Message</label>
-      <textarea id="messageContent" placeholder="Write your message..."></textarea>
-      <div class="char-count" id="charCount">0 / 2000</div>
-
-      <div style="margin-top:8px;">
-        <label style="display:inline-flex;gap:8px;align-items:center;"><input id="pingEveryone" type="checkbox" /> Ping @everyone</label>
-      </div>
-
-      <label for="fileInput" style="margin-top:10px;">Attach file(s)</label>
-      <input id="fileInput" type="file" multiple />
-      <div id="fileList" style="margin-top:8px;"></div>
-    </div>
+    <section id="tab-settings" class="tab-panel" role="tabpanel">
+      <label style="display:flex;gap:8px;align-items:center;">
+        <input type="checkbox" id="darkToggle"/> Enable Dark Mode
+      </label>
+    </section>
   </div>
 
-  <!-- Embed card (collapsible style) -->
-  <div class="card" id="embedCard">
-    <div class="card-header" id="embedHeader" style="cursor:pointer;">
-      <div class="card-title">Embed (optional)</div>
-      <div class="muted">Title, description, color, images, footer</div>
+  <div class="card">
+    <strong>Preview</strong>
+    <div id="preview" class="preview" aria-live="polite">
+      <div class="helper">Start typing to see a live preview…</div>
     </div>
-    <div class="card-body" id="embedBody">
-      <label for="embedTitle">Embed Title</label>
-      <input id="embedTitle" type="text" placeholder="Embed title" />
-
-      <label for="embedDescription">Embed Description</label>
-      <textarea id="embedDescription" placeholder="Embed description"></textarea>
-
-      <div class="row">
-        <div>
-          <label for="embedColor">Embed Color</label>
-          <input id="embedColor" type="color" value="#5865f2" />
-        </div>
-        <div>
-          <label for="embedFooter">Footer text</label>
-          <input id="embedFooter" type="text" placeholder="Footer text" />
-        </div>
-      </div>
-
-      <label for="embedImage">Embed image URL</label>
-      <input id="embedImage" type="text" placeholder="https://..." />
-
-      <label for="embedThumbnail">Embed thumbnail URL</label>
-      <input id="embedThumbnail" type="text" placeholder="https://..." />
-    </div>
+    <div id="resp" class="response" style="display:none"></div>
   </div>
-
-  <!-- Response message -->
-  <div id="response" class="card" style="display:none;"></div>
 </div>
 
-<!-- tiny toast -->
 <div id="toast" class="toast">Copied</div>
 
 <script>
-/* ========= State ========= */
-const webhookURL = document.getElementById('webhookURL');
-const webhookStatus = document.getElementById('webhookStatus');
-const importInput = document.getElementById('importWebhookFile');
-const exportBtn = document.getElementById('exportWebhookBtn');
-const importMsg = document.getElementById('importMsg');
+/************ Elements ************/
+const tabs=[...document.querySelectorAll('.tab')];
+const panels={ webhook:document.getElementById('tab-webhook'), message:document.getElementById('tab-message'), embeds:document.getElementById('tab-embeds'), settings:document.getElementById('tab-settings') };
+const webhookURL=document.getElementById('webhookURL');
+const username=document.getElementById('username');
+const avatarURL=document.getElementById('avatarURL');
+const content=document.getElementById('content');
+const addEmbedBtn=document.getElementById('addEmbed');
+const embedsEl=document.getElementById('embeds');
+const preview=document.getElementById('preview');
+const resp=document.getElementById('resp');
+const toast=document.getElementById('toast');
+const banner=document.getElementById('banner');
+const darkToggle=document.getElementById('darkToggle');
+const fabSend=document.getElementById('fabSend');
 
-const username = document.getElementById('username');
-const avatarURL = document.getElementById('avatarURL');
-const messageContent = document.getElementById('messageContent');
-const charCount = document.getElementById('charCount');
-const pingEveryone = document.getElementById('pingEveryone');
+let embeds=[]; // {title, description, color}
 
-const fileInput = document.getElementById('fileInput');
-const fileList = document.getElementById('fileList');
+/************ Tabs ************/
+tabs.forEach(t=>t.addEventListener('click',()=>{ tabs.forEach(x=>x.classList.remove('active')); t.classList.add('active'); Object.values(panels).forEach(p=>p.classList.remove('active')); panels[t.dataset.tab].classList.add('active'); }));
 
-const embedTitle = document.getElementById('embedTitle');
-const embedDescription = document.getElementById('embedDescription');
-const embedColor = document.getElementById('embedColor');
-const embedImage = document.getElementById('embedImage');
-const embedThumbnail = document.getElementById('embedThumbnail');
-const embedFooter = document.getElementById('embedFooter');
+/************ Theme ************/
+function applyTheme(dark){ document.body.classList.toggle('dark', dark); localStorage.setItem('webhook_dark', dark?'1':'0'); }
+darkToggle.addEventListener('change', e=> applyTheme(e.target.checked));
+(function(){ const saved=localStorage.getItem('webhook_dark'); const dark = saved? saved==='1' : window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches; darkToggle.checked=dark; applyTheme(dark); })();
 
-const previewContent = document.getElementById('previewContent');
-const stickyPreview = document.getElementById('stickyPreview');
-
-const sendBtn = document.getElementById('sendBtn');
-const copyJsonBtn = document.getElementById('copyJsonBtn');
-const testWebhookBtn = document.getElementById('testWebhookBtn');
-
-const response = document.getElementById('response');
-const toast = document.getElementById('toast');
-
-let selectedFiles = [];
-
-/* ========= Utilities ========= */
-function showResponse(text, ok=true, timeout=3500){
-  response.style.display = 'block';
-  response.textContent = text;
-  response.className = 'card ' + (ok? 'response ok' : 'response err');
-  if(timeout) setTimeout(()=> response.style.display = 'none', timeout);
+/************ Preview ************/
+const esc=s=>String(s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
+function renderPreview(){
+  const name=esc(username.value||'Webhook');
+  const avatar=esc(avatarURL.value||'https://cdn.discordapp.com/embed/avatars/0.png');
+  const msg=esc(content.value||'');
+  let html=`<div class="msg"><img class="avatar" src="${avatar}" alt="avatar"/><div><div class="name">${name}</div><div style="margin-top:6px;white-space:pre-wrap">${msg}</div></div></div>`;
+  embeds.forEach(e=>{
+    const color=e.color||'#5865f2';
+    html+=`<div class="embed" style="border-color:${esc(color)}">${e.title?`<div style="font-weight:800">${esc(e.title)}</div>`:''}${e.description?`<div style="margin-top:6px;white-space:pre-wrap">${esc(e.description)}</div>`:''}</div>`;
+  });
+  preview.innerHTML=html;
 }
-function showToast(text='Copied'){
-  toast.textContent = text; toast.style.display = 'block';
-  setTimeout(()=> toast.style.display = 'none', 1700);
+[username,avatarURL,content].forEach(el=> el.addEventListener('input', renderPreview));
+
+/************ Embeds UI ************/
+function addEmbed(pre={}){
+  const data={ title:pre.title||'', description:pre.description||'', color:pre.color||'#5865f2' };
+  embeds.push(data);
+  const idx=embeds.length-1;
+  const wrap=document.createElement('div');
+  wrap.className='embed-card';
+  wrap.innerHTML=`
+    <label>Title</label>
+    <input type="text" value="${esc(data.title)}" data-i="${idx}" data-f="title">
+    <label>Description</label>
+    <textarea data-i="${idx}" data-f="description">${esc(data.description)}</textarea>
+    <label>Color</label>
+    <input type="color" value="${data.color}" data-i="${idx}" data-f="color">
+    <button class="btn-alt" data-remove="${idx}">❌ Remove</button>
+  `;
+  embedsEl.appendChild(wrap);
+  wrap.querySelectorAll('input,textarea').forEach(inp=> inp.addEventListener('input', ()=>{ embeds[inp.dataset.i][inp.dataset.f]=inp.value; renderPreview(); }));
+  wrap.querySelector('[data-remove]').addEventListener('click', ()=>{ embeds.splice(idx,1); wrap.remove(); renderPreview(); });
+  renderPreview();
 }
+addEmbedBtn.addEventListener('click', ()=> addEmbed());
 
-/* ========= Debounce for webhook validation ========= */
-let validateTimer = null;
-async function validateWebhook(url){
-  webhookStatus.textContent = 'Checking...';
-  webhookStatus.style.color = '';
-  try {
-    // try a GET (often returns 200 or 405); use response.ok as heuristic
-    const res = await fetch(url, { method:'GET' });
-    if(res.ok || res.status === 204 || res.status === 405){
-      webhookStatus.textContent = "✅ Valid webhook (reachable)";
-      webhookStatus.style.color = "green";
-    } else {
-      webhookStatus.textContent = `❌ Invalid (status ${res.status})`;
-      webhookStatus.style.color = "red";
-    }
-  } catch(err){
-    webhookStatus.textContent = "❌ Invalid / CORS";
-    webhookStatus.style.color = "red";
-  }
+/************ Payload ************/
+function buildEmbeds(){
+  // Only include embeds that have at least one of the allowed fields filled
+  return embeds.map(e=>{
+    const out={};
+    if(e.title) out.title=e.title;
+    if(e.description) out.description=e.description;
+    if(e.color) out.color=parseInt(e.color.replace('#',''),16); // Discord expects integer color
+    return out;
+  }).filter(e=> Object.keys(e).length>0);
 }
-
-/* run validation with debounce */
-webhookURL.addEventListener('input', e=>{
-  webhookStatus.textContent = '…';
-  if(validateTimer) clearTimeout(validateTimer);
-  validateTimer = setTimeout(()=> {
-    const url = webhookURL.value.trim();
-    if(!url) { webhookStatus.textContent = '—'; return; }
-    validateWebhook(url);
-  }, 500);
-  autoSaveDraft(); // autosave
-});
-
-/* ========= Export / Import webhook (simple single-webhook JSON) ========= */
-exportBtn.addEventListener('click', ()=>{
-  const url = webhookURL.value.trim();
-  if(!url) return showResponse('No webhook to export.', false);
-  const data = { webhookURL: url };
-  const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'webhook-settings.json';
-  a.click();
-});
-
-importInput.addEventListener('change', function(){
-  const f = this.files[0];
-  if(!f) return;
-  const r = new FileReader();
-  r.onload = e => {
-    try{
-      const parsed = JSON.parse(e.target.result);
-      if(parsed.webhookURL){
-        webhookURL.value = parsed.webhookURL;
-        validateWebhook(parsed.webhookURL);
-        showResponse('Imported webhook URL.', true);
-        autoSaveDraft();
-      } else {
-        showResponse('No webhookURL found in file.', false);
-      }
-    } catch(err){
-      showResponse('Invalid JSON file.', false);
-    }
-    importInput.value = '';
-  };
-  r.readAsText(f);
-});
-
-/* ========= File handling ========= */
-fileInput.addEventListener('change', ()=> {
-  selectedFiles = Array.from(fileInput.files || []);
-  renderFileList();
-  autoSaveDraft(); // note: file content isn't saved, only metadata stored if you want
-});
-function renderFileList(){
-  if(selectedFiles.length === 0){
-    fileList.innerHTML = `<div class="muted">No files selected</div>`;
-    return;
-  }
-  fileList.innerHTML = selectedFiles.map((f, i) => 
-    `<div class="file-item">${escapeHtml(f.name)}</div>`
-  ).join('');
-}
-
-/* small escape for preview */
-function escapeHtml(s){
-  if(!s) return '';
-  return s.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
-}
-
-/* ========= Character counter & preview ========= */
-messageContent.addEventListener('input', ()=>{
-  charCountUpdate();
-  updatePreview();
-  autoSaveDraft();
-});
-function charCountUpdate(){
-  const len = messageContent.value.length;
-  charCount.textContent = `${len} / 2000`;
-  charCount.style.color = (len>2000? 'crimson' : '');
-}
-
-/* input listeners for preview & autosave */
-[username, avatarURL, pingEveryone, embedTitle, embedDescription, embedColor, embedImage, embedThumbnail, embedFooter]
-.forEach(el=>{
-  el.addEventListener('input', ()=> { updatePreview(); autoSaveDraft(); });
-});
-
-/* preview generation */
-function updatePreview(){
-  const user = username.value.trim() || 'Webhook';
-  const avatar = avatarURL.value.trim() || 'https://cdn.discordapp.com/embed/avatars/0.png';
-  const content = messageContent.value.trim() || '';
-  const ping = pingEveryone.checked;
-
-  let html = `<div style="display:flex;gap:10px;align-items:flex-start">
-    <img src="${escapeHtml(avatar)}" style="width:48px;height:48px;border-radius:8px;object-fit:cover"/>
-    <div>
-      <div style="font-weight:700">${escapeHtml(user)}</div>
-      <div style="margin-top:6px;white-space:pre-wrap">${escapeHtml((ping? '@everyone ' : '') + content)}</div>
-    </div>
-  </div>`;
-
-  // embed preview only if any field present
-  if(embedTitle.value.trim() || embedDescription.value.trim() || embedImage.value.trim() || embedThumbnail.value.trim() || embedFooter.value.trim()){
-    const border = embedColor.value || '#5865f2';
-    html += `<div class="embed-preview" style="border-color:${escapeHtml(border)}; margin-top:10px">
-      ${embedTitle.value? `<div class="embed-title">${escapeHtml(embedTitle.value)}</div>` : ''}
-      ${embedDescription.value? `<div style="margin-top:6px">${escapeHtml(embedDescription.value)}</div>` : ''}
-      ${embedImage.value? `<div style="margin-top:8px"><img src="${escapeHtml(embedImage.value)}" style="max-width:100%;border-radius:6px"/></div>` : ''}
-      ${embedThumbnail.value? `<div style="margin-top:8px"><img src="${escapeHtml(embedThumbnail.value)}" style="max-width:80px;border-radius:6px"/></div>` : ''}
-      ${embedFooter.value? `<div style="margin-top:8px;font-size:13px;opacity:0.85">${escapeHtml(embedFooter.value)}</div>` : ''}
-    </div>`;
-  }
-
-  // attached files list
-  if(selectedFiles.length>0){
-    html += `<div style="margin-top:10px"><strong>Files:</strong><ul>`;
-    html += selectedFiles.map(f=>`<li>${escapeHtml(f.name)}</li>`).join('');
-    html += `</ul></div>`;
-  }
-
-  // **ONLY update the preview content element**.
-  // Previously we replaced the whole stickyPreview.innerHTML which removed the wrapper (causes glitches).
-  previewContent.innerHTML = html;
-}
-
-/* ========= Collapsible embed card toggling ========= */
-const embedHeader = document.getElementById('embedHeader');
-const embedBody = document.getElementById('embedBody');
-let embedOpen = true;
-embedHeader.addEventListener('click', ()=> {
-  embedOpen = !embedOpen;
-  embedBody.style.display = embedOpen ? 'block' : 'none';
-});
-
-/* ========= Autosave (Feature 8) =========
-   We save text fields and embed inputs to localStorage.
-   Note: Files cannot be saved to localStorage — only their names (optional).
-*/
-const DRAFT_KEY = 'discordWebhookDraft_v1';
-function autoSaveDraft(){
-  try{
-    const draft = {
-      webhookURL: webhookURL.value || '',
-      username: username.value || '',
-      avatarURL: avatarURL.value || '',
-      messageContent: messageContent.value || '',
-      pingEveryone: pingEveryone.checked,
-      embedTitle: embedTitle.value || '',
-      embedDescription: embedDescription.value || '',
-      embedColor: embedColor.value || '',
-      embedImage: embedImage.value || '',
-      embedThumbnail: embedThumbnail.value || '',
-      embedFooter: embedFooter.value || '',
-      // store file names only (can't store file objects)
-      files: selectedFiles.map(f => f.name)
-    };
-    localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
-  }catch(e){
-    // ignore
-  }
-}
-
-function loadDraft(){
-  try{
-    const raw = localStorage.getItem(DRAFT_KEY);
-    if(!raw) return;
-    const d = JSON.parse(raw);
-    if(d.webhookURL) { webhookURL.value = d.webhookURL; validateWebhook(d.webhookURL); }
-    if(d.username) username.value = d.username;
-    if(d.avatarURL) avatarURL.value = d.avatarURL;
-    if(d.messageContent) messageContent.value = d.messageContent;
-    if(typeof d.pingEveryone === 'boolean') pingEveryone.checked = d.pingEveryone;
-    if(d.embedTitle) embedTitle.value = d.embedTitle;
-    if(d.embedDescription) embedDescription.value = d.embedDescription;
-    if(d.embedColor) embedColor.value = d.embedColor;
-    if(d.embedImage) embedImage.value = d.embedImage;
-    if(d.embedThumbnail) embedThumbnail.value = d.embedThumbnail;
-    if(d.embedFooter) embedFooter.value = d.embedFooter;
-    // we can't restore file inputs automatically (browser security), but we can show the saved file names
-    if(Array.isArray(d.files) && d.files.length > 0){
-      fileList.innerHTML = d.files.map(n => `<div class="file-item">${escapeHtml(n)} (saved name)</div>`).join('');
-    }
-    charCountUpdate();
-    updatePreview();
-  }catch(e){ /* ignore */ }
-}
-
-/* load draft on startup */
-loadDraft();
-
-/* ========= Copy JSON (Feature 9) =========
-   Generates the same payload structure used to send and copies JSON to clipboard.
-*/
-copyJsonBtn.addEventListener('click', () => {
-  const payload = buildPayload(false); // don't include files, only JSON
-  if(!payload) { showResponse('Nothing to copy (add content or embed).', false); return; }
-  const text = JSON.stringify(payload, null, 2);
-  navigator.clipboard.writeText(text)
-    .then(()=> { showResponse('JSON copied to clipboard.', true); showToast('Copied'); })
-    .catch(err => { showResponse('Failed to copy JSON: ' + err, false); });
-});
-
-/* helper to build payload object (same logic as send) */
-function buildPayload(includeFiles=true){
-  const url = webhookURL.value.trim();
-  const content = messageContent.value.trim();
-  const user = username.value.trim();
-  const avatar = avatarURL.value.trim();
-  const ping = pingEveryone.checked;
-
-  // if nothing to send -> return null
-  if(!url) return null;
-  if(!content && selectedFiles.length===0
-     && !embedTitle.value.trim() && !embedDescription.value.trim()
-     && !embedImage.value.trim() && !embedThumbnail.value.trim() && !embedFooter.value.trim()){
-    return null;
-  }
-
-  let p = {};
-  if(content) p.content = ping ? `@everyone ${content}` : content;
-  if(user) p.username = user;
-  if(avatar) p.avatar_url = avatar;
-
-  // embed only if any embed field present
-  if(embedTitle.value.trim() || embedDescription.value.trim() || embedImage.value.trim() || embedThumbnail.value.trim() || embedFooter.value.trim()){
-    let emb = {};
-    if(embedTitle.value.trim()) emb.title = embedTitle.value.trim();
-    if(embedDescription.value.trim()) emb.description = embedDescription.value.trim();
-    if(embedColor.value) emb.color = parseInt(embedColor.value.replace('#',''), 16);
-    if(embedImage.value.trim()) emb.image = { url: embedImage.value.trim() };
-    if(embedThumbnail.value.trim()) emb.thumbnail = { url: embedThumbnail.value.trim() };
-    if(embedFooter.value.trim()) emb.footer = { text: embedFooter.value.trim() };
-    p.embeds = [emb];
-  }
-
+function buildPayload(){
+  const p={};
+  const c=(content.value||'').trim(); if(c) p.content=c; 
+  if(username.value) p.username=username.value; if(avatarURL.value) p.avatar_url=avatarURL.value;
+  const em=buildEmbeds(); if(em.length) p.embeds=em;
   return p;
 }
 
-/* ========= Send message (uses FormData to allow file uploads) ========= */
-async function sendMessage(){
-  const url = webhookURL.value.trim();
-  const payloadObj = buildPayload(true);
-  if(!payloadObj){
-    showResponse('Webhook or message/embeds/files required.', false); return;
+/************ Send + Test ************/
+async function sendPayload(test=false){
+  const url=webhookURL.value.trim(); if(!url){ return showResp('Enter webhook URL', false); }
+  const body = test? { content:'✅ Test from Webhook Manager' } : buildPayload();
+  if(!test && !body.content && !(body.embeds && body.embeds.length)){
+    return showResp('Add message text or an embed before sending.', false);
   }
-
-  // prepare FormData
-  const form = new FormData();
-  form.append('payload_json', JSON.stringify(payloadObj));
-  // attach files (if any)
-  selectedFiles.forEach(f => form.append('file', f));
-
   try{
-    const r = await fetch(url, { method:'POST', body: form });
-    if(r.ok){
-      showResponse('Message sent successfully.', true);
-      // after send: clear files and save draft
-      selectedFiles = [];
-      fileInput.value = '';
-      fileList.innerHTML = '<div class="muted">No files selected</div>';
-      autoSaveDraft(); // update draft
+    const r = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+    const txt = await r.text();
+    let parsed; try{ parsed = JSON.parse(txt); }catch{}
+    if(r.ok){ showResp('Message sent ✅', true); return; }
+    // Improved error surface
+    if(parsed && parsed.message){
+      const details = parsed.errors ? JSON.stringify(parsed.errors) : '';
+      showResp(`Error: ${parsed.message}${details? ' — '+details: ''}`, false);
     } else {
-      const txt = await r.text();
-      showResponse('Send failed: ' + txt, false);
+      showResp(`Error ${r.status}: ${txt || 'Request failed'}`, false);
     }
-  } catch(err){
-    showResponse('Error sending: ' + err.message, false);
+  }catch(e){
+    showResp('Network error: '+e.message+ (location.protocol==='file:'? ' (tip: open in a regular browser)':''), false);
   }
 }
 
-/* ========= Quick test webhook (sends tiny message) ========= */
-testWebhookBtn.addEventListener('click', async ()=>{
-  const url = webhookURL.value.trim();
-  if(!url) { showResponse('Enter webhook URL first.', false); return; }
-  try {
-    const res = await fetch(url, {
-      method:'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ content: '✅ Test from Webhook Manager (test only)' })
-    });
-    if(res.ok) showResponse('Test message sent.', true);
-    else { const t = await res.text(); showResponse('Test failed: ' + t, false); }
-  } catch(e){ showResponse('Test error: ' + e.message, false); }
-});
+fabSend.addEventListener('click', ()=> sendPayload(false));
 
-/* ========= Wire send / copy buttons ========= */
-sendBtn.addEventListener('click', sendMessage);
+/************ Utils ************/
+function showResp(text, ok){ resp.style.display='block'; resp.textContent=text; resp.className='response '+(ok?'ok':'err'); setTimeout(()=>{ resp.style.display='none'; }, 5000); }
 
-/* ========= Dark mode toggle ========= */
-const darkToggle = document.getElementById('darkToggle');
-darkToggle.addEventListener('change', e => {
-  document.body.classList.toggle('dark', e.target.checked);
-  // save preference
-  localStorage.setItem('webhook_darkmode', e.target.checked ? '1' : '0');
-});
-/* restore theme preference */
-(function restoreTheme(){
-  const v = localStorage.getItem('webhook_darkmode');
-  if(v === '1'){ darkToggle.checked = true; document.body.classList.add('dark'); }
-})();
-
-/* ========= Auto-save on page unload too ========= */
-window.addEventListener('beforeunload', autoSaveDraft);
-
-/* ========= Initialize UI ========= */
-(function init(){
-  // charcount
-  charCountUpdate = () => {
-    const v = messageContent.value.length;
-    charCount.textContent = `${v} / 2000`;
-    charCount.style.color = v>2000? 'crimson' : '';
-  };
-  // initial states
-  renderFileList();
-  charCountUpdate();
-  updatePreview();
-})();
+/************ Init ************/
+if(location.protocol==='file:'){ banner.style.display='block'; }
+renderPreview();
 </script>
 </body>
 </html>
