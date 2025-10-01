@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Discord Webhook Manager — Touch First</title>
+<title>Discord Webhook Manager — Touch First + Files/History/Mentions</title>
 <style>
 :root{
   --accent:#5865f2; --accent-press:#4752c4;
@@ -35,9 +35,10 @@ input:focus, textarea:focus, select:focus{ outline:none; border-color:var(--acce
 textarea{ min-height:110px; resize:vertical; }
 .helper{ color:var(--muted); font-size:12px; }
 body.dark .helper{ color:var(--muted-dark);} 
+.counter{ font-size:12px; color:var(--muted); text-align:right; }
 
 /* Preview */
-.preview{ border:1px dashed rgba(0,0,0,.12); border-radius:12px; padding:12px; background:rgba(0,0,0,.02); max-height:220px; overflow:auto; }
+.preview{ border:1px dashed rgba(0,0,0,.12); border-radius:12px; padding:12px; background:rgba(0,0,0,.02); max-height:240px; overflow:auto; }
 body.dark .preview{ border-color:rgba(255,255,255,.12); background:rgba(255,255,255,.04); }
 .msg{ display:flex; gap:10px; align-items:flex-start; }
 .msg .avatar{ width:42px; height:42px; border-radius:8px; object-fit:cover; }
@@ -52,13 +53,8 @@ body.dark .embed{ background:rgba(255,255,255,.05); }
 .response.err{ background:#fee2e2; color:#7f1d1d; }
 .banner{ background:#ffecb3; color:#333; padding:8px 10px; border-radius:10px; margin:10px 0; font-size:14px; display:none; }
 
-/* Floating Send (thumb reach) */
-.fab{
-  position:fixed; right:16px; bottom:16px; z-index:60;
-  background:linear-gradient(135deg,var(--accent),var(--accent-press)); color:#fff;
-  border:none; border-radius:999px; padding:14px 18px; font-weight:900; box-shadow:0 16px 40px rgba(88,101,242,.3); cursor:pointer;
-  display:flex; align-items:center; gap:10px; font-size:16px;
-}
+/* Floating Send */
+.fab{ position:fixed; right:16px; bottom:16px; z-index:60; background:linear-gradient(135deg,var(--accent),var(--accent-press)); color:#fff; border:none; border-radius:999px; padding:14px 18px; font-weight:900; box-shadow:0 16px 40px rgba(88,101,242,.3); cursor:pointer; display:flex; align-items:center; gap:10px; font-size:16px; }
 .fab:active{ transform:translateY(1px); }
 
 .btn-alt{ background:transparent; color:var(--accent); border:1.5px solid var(--accent); padding:8px 10px; border-radius:10px; cursor:pointer; }
@@ -66,13 +62,30 @@ body.dark .embed{ background:rgba(255,255,255,.05); }
 .embed-card{ border:1px solid rgba(0,0,0,.08); border-radius:12px; padding:12px; margin:12px 0; }
 body.dark .embed-card{ border-color:rgba(255,255,255,.08);} 
 
-@media (hover:hover){ .fab:hover{ filter:brightness(1.03);} }
-@media (max-width:720px){ .tab{ flex:1; text-align:center; } }
+/* Drag & drop */
+.drop{ border:2px dashed rgba(0,0,0,.15); border-radius:12px; padding:18px; text-align:center; transition:border-color .15s, background .15s; }
+.drop.drag{ border-color:var(--accent); background:rgba(88,101,242,.06); }
+.file-grid{ display:flex; flex-wrap:wrap; gap:10px; }
+.file-card{ border:1px solid rgba(0,0,0,.08); border-radius:10px; padding:8px; width:140px; display:flex; flex-direction:column; gap:6px; align-items:center; }
+.file-card img{ width:100%; height:90px; object-fit:cover; border-radius:8px; }
+.file-card .name{ font-size:12px; text-align:center; }
+.file-card button{ border:none; background:#ef4444; color:#fff; border-radius:8px; padding:4px 6px; cursor:pointer; }
+
+/* Pills for message images */
+.pills{ display:flex; flex-wrap:wrap; gap:8px; }
+.pill{ display:flex; gap:8px; align-items:center; border:1px solid rgba(0,0,0,.12); border-radius:999px; padding:6px 10px; }
+body.dark .pill{ border-color:rgba(255,255,255,.12); }
+.pill button{ border:none; background:#ef4444; color:#fff; border-radius:999px; padding:4px 6px; cursor:pointer; }
+.thumb{ width:72px; height:72px; object-fit:cover; border-radius:10px; border:1px solid rgba(0,0,0,.08); }
+body.dark .thumb{ border-color:rgba(255,255,255,.08); }
+
+/* History */
+.history-item{ border:1px solid rgba(0,0,0,.08); border-radius:10px; padding:10px; margin:8px 0; display:flex; gap:10px; justify-content:space-between; align-items:center; }
+.history-actions button{ margin-left:6px; }
 </style>
 </head>
 <body>
 
-<!-- Floating action send button (bottom-right) -->
 <button id="fabSend" class="fab">🚀 Send</button>
 
 <div class="container">
@@ -84,6 +97,8 @@ body.dark .embed-card{ border-color:rgba(255,255,255,.08);}
       <div class="tab active" data-tab="webhook" role="tab">Webhook</div>
       <div class="tab" data-tab="message" role="tab">Message</div>
       <div class="tab" data-tab="embeds" role="tab">Embeds</div>
+      <div class="tab" data-tab="mentions" role="tab">Mentions</div>
+      <div class="tab" data-tab="history" role="tab">History</div>
       <div class="tab" data-tab="settings" role="tab">Settings</div>
     </div>
 
@@ -96,15 +111,51 @@ body.dark .embed-card{ border-color:rgba(255,255,255,.08);}
     <section id="tab-message" class="tab-panel" role="tabpanel">
       <label for="username">Username</label>
       <input id="username" type="text" placeholder="Displayed username (optional)"/>
+
       <label for="avatarURL">Avatar URL</label>
       <input id="avatarURL" type="url" placeholder="https://… (optional)"/>
+
       <label for="content">Message</label>
       <textarea id="content" placeholder="Type your message…"></textarea>
+      <div class="counter" id="contentCount">0 / 2000</div>
+
+      <hr style="margin:14px 0; opacity:.25">
+      <strong>Images via link</strong>
+      <div class="helper">Add one or more image URLs to include under the message.</div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:8px">
+        <input id="imageInput" type="url" placeholder="https://example.com/image.png" style="flex:1 1 280px">
+        <button class="btn-alt" id="addImage">➕ Add</button>
+      </div>
+      <div id="imageList" class="pills" style="margin-top:10px"></div>
+      <div id="imageThumbs" style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px"></div>
+
+      <hr style="margin:14px 0; opacity:.25">
+      <strong>Attachments (drag & drop)</strong>
+      <div id="drop" class="drop">Drop files here or <label for="fileInput" class="btn-alt" style="display:inline-flex">browse…</label>
+        <input id="fileInput" type="file" multiple style="display:none"></div>
+      <div id="fileGrid" class="file-grid" style="margin-top:10px"></div>
     </section>
 
     <section id="tab-embeds" class="tab-panel" role="tabpanel">
       <button class="btn-alt" id="addEmbed">➕ Add Embed</button>
       <div id="embeds"></div>
+      <div class="helper" style="margin-top:8px">Each embed supports Title, Description, Color, Image URL, Thumbnail URL, and Footer. Max 10 embeds total (including message-level image links).</div>
+    </section>
+
+    <section id="tab-mentions" class="tab-panel" role="tabpanel">
+      <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+        <label style="display:flex; gap:8px; align-items:center"><input type="checkbox" id="mentionEveryone"> @everyone</label>
+        <label style="display:flex; gap:8px; align-items:center"><input type="checkbox" id="mentionHere"> @here</label>
+      </div>
+      <label>Role IDs (comma separated)</label>
+      <input id="mentionRoles" type="text" placeholder="12345,67890"/>
+      <label>User IDs (comma separated)</label>
+      <input id="mentionUsers" type="text" placeholder="11111,22222"/>
+      <div class="helper">Tips: Role/User IDs bisa diambil dari Discord (Developer Mode). Allowed mentions akan dibatasi sesuai input ini supaya aman, tidak spam semua orang.</div>
+    </section>
+
+    <section id="tab-history" class="tab-panel" role="tabpanel">
+      <div id="historyList" class="helper">No history yet.</div>
     </section>
 
     <section id="tab-settings" class="tab-panel" role="tabpanel">
@@ -128,29 +179,48 @@ body.dark .embed-card{ border-color:rgba(255,255,255,.08);}
 <script>
 /************ Elements ************/
 const tabs=[...document.querySelectorAll('.tab')];
-const panels={ webhook:document.getElementById('tab-webhook'), message:document.getElementById('tab-message'), embeds:document.getElementById('tab-embeds'), settings:document.getElementById('tab-settings') };
+const panels={ webhook:document.getElementById('tab-webhook'), message:document.getElementById('tab-message'), embeds:document.getElementById('tab-embeds'), mentions:document.getElementById('tab-mentions'), history:document.getElementById('tab-history'), settings:document.getElementById('tab-settings') };
 const webhookURL=document.getElementById('webhookURL');
 const username=document.getElementById('username');
 const avatarURL=document.getElementById('avatarURL');
 const content=document.getElementById('content');
+const contentCount=document.getElementById('contentCount');
 const addEmbedBtn=document.getElementById('addEmbed');
 const embedsEl=document.getElementById('embeds');
 const preview=document.getElementById('preview');
 const resp=document.getElementById('resp');
-const toast=document.getElementById('toast');
 const banner=document.getElementById('banner');
 const darkToggle=document.getElementById('darkToggle');
 const fabSend=document.getElementById('fabSend');
+const mentionEveryone=document.getElementById('mentionEveryone');
+const mentionHere=document.getElementById('mentionHere');
+const mentionRoles=document.getElementById('mentionRoles');
+const mentionUsers=document.getElementById('mentionUsers');
 
-let embeds=[]; // {title, description, color}
+// Images & files
+const imageInput=document.getElementById('imageInput');
+const addImageBtn=document.getElementById('addImage');
+const imageList=document.getElementById('imageList');
+const imageThumbs=document.getElementById('imageThumbs');
+const drop=document.getElementById('drop');
+const fileInput=document.getElementById('fileInput');
+const fileGrid=document.getElementById('fileGrid');
+
+// History
+const historyList=document.getElementById('historyList');
+const HIST_KEY='discord_webhook_history_v2';
+
+let embeds=[]; // {title, description, color, footer, image, thumb}
+let msgImages=[]; // list of url strings
+let files=[]; // File[]
 
 /************ Tabs ************/
 tabs.forEach(t=>t.addEventListener('click',()=>{ tabs.forEach(x=>x.classList.remove('active')); t.classList.add('active'); Object.values(panels).forEach(p=>p.classList.remove('active')); panels[t.dataset.tab].classList.add('active'); }));
 
 /************ Theme ************/
 function applyTheme(dark){ document.body.classList.toggle('dark', dark); localStorage.setItem('webhook_dark', dark?'1':'0'); }
-darkToggle.addEventListener('change', e=> applyTheme(e.target.checked));
-(function(){ const saved=localStorage.getItem('webhook_dark'); const dark = saved? saved==='1' : window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches; darkToggle.checked=dark; applyTheme(dark); })();
+darkToggle?.addEventListener('change', e=> applyTheme(e.target.checked));
+(function(){ const saved=localStorage.getItem('webhook_dark'); const dark = saved? saved==='1' : window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches; if(darkToggle){ darkToggle.checked=dark; } applyTheme(dark); })();
 
 /************ Preview ************/
 const esc=s=>String(s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
@@ -158,89 +228,90 @@ function renderPreview(){
   const name=esc(username.value||'Webhook');
   const avatar=esc(avatarURL.value||'https://cdn.discordapp.com/embed/avatars/0.png');
   const msg=esc(content.value||'');
-  let html=`<div class="msg"><img class="avatar" src="${avatar}" alt="avatar"/><div><div class="name">${name}</div><div style="margin-top:6px;white-space:pre-wrap">${msg}</div></div></div>`;
-  embeds.forEach(e=>{
-    const color=e.color||'#5865f2';
-    html+=`<div class="embed" style="border-color:${esc(color)}">${e.title?`<div style="font-weight:800">${esc(e.title)}</div>`:''}${e.description?`<div style="margin-top:6px;white-space:pre-wrap">${esc(e.description)}</div>`:''}</div>`;
-  });
+  let html=`<div class="msg"><img class=\"avatar\" src=\"${avatar}\" alt=\"avatar\"/><div><div class=\"name\">${name}</div><div style=\"margin-top:6px;white-space:pre-wrap\">${msg}</div></div></div>`;
+  if(msgImages.length){ html += `<div style=\"display:flex;gap:8px;flex-wrap:wrap;margin-top:8px\">` + msgImages.map(u=>`<img class=\"thumb\" src=\"${esc(u)}\" alt=\"image\"/>`).join('') + `</div>`; }
+  embeds.forEach(e=>{ const color=e.color||'#5865f2'; html+=`<div class=\"embed\" style=\"border-color:${esc(color)}\">`+(e.title?`<div style=\"font-weight:800\">${esc(e.title)}</div>`:'')+(e.description?`<div style=\"margin-top:6px;white-space:pre-wrap\">${esc(e.description)}</div>`:'')+(e.image?`<div style=\"margin-top:8px\"><img src=\"${esc(e.image)}\" class=\"thumb\" style=\"width:auto;height:120px\" alt=\"embed image\"></div>`:'')+(e.thumb?`<div style=\"margin-top:8px\"><img src=\"${esc(e.thumb)}\" class=\"thumb\" alt=\"thumbnail\"></div>`:'')+(e.footer?`<div style=\"margin-top:8px;font-size:12px;opacity:.8\">${esc(e.footer)}</div>`:'')+`</div>`; });
   preview.innerHTML=html;
 }
-[username,avatarURL,content].forEach(el=> el.addEventListener('input', renderPreview));
+[username,avatarURL,content].forEach(el=> el.addEventListener('input', ()=>{ renderPreview(); updateCounts(); }));
+function updateCounts(){ const n=(content.value||'').length; if(contentCount) { contentCount.textContent=`${n} / 2000`; contentCount.style.color = n>2000 ? 'crimson' : ''; } }
+
+/************ Images via link ************/
+function validUrl(u){ try{ const x=new URL(u); return ['http:','https:'].includes(x.protocol);}catch{ return false; } }
+function renderImages(){ imageList.innerHTML = msgImages.map((u,i)=>`<span class=\"pill\"><span>${esc(u)}</span><button data-rm=\"${i}\">×</button></span>`).join(''); imageList.querySelectorAll('[data-rm]').forEach(b=> b.addEventListener('click',()=>{ msgImages.splice(parseInt(b.dataset.rm,10),1); renderImages(); renderPreview(); })); imageThumbs.innerHTML = msgImages.map(u=>`<img class=\"thumb\" src=\"${esc(u)}\" alt=\"img\">`).join(''); }
+addImageBtn?.addEventListener('click',()=>{ const u=imageInput.value.trim(); if(!u) return; if(!validUrl(u)) return showResp('Invalid image URL', false); if(msgImages.length>=10) return showResp('Max 10 images', false); msgImages.push(u); imageInput.value=''; renderImages(); renderPreview(); });
+
+/************ Drag & drop files ************/
+function renderFiles(){
+  fileGrid.innerHTML = files.map((f,i)=>{
+    const isImg = /^image\//.test(f.type);
+    const url = isImg ? URL.createObjectURL(f) : '';
+    return `<div class=\"file-card\">${isImg?`<img src=\"${url}\" alt=\"${esc(f.name)}\"/>`:`<div class=\"helper\" style=\"height:90px;display:flex;align-items:center;justify-content:center;\">${esc(f.type||'file')}</div>`}<div class=\"name\">${esc(f.name)}</div><button data-rm=\"${i}\">Remove</button></div>`;
+  }).join('');
+  fileGrid.querySelectorAll('[data-rm]').forEach(b=> b.addEventListener('click',()=>{ files.splice(parseInt(b.dataset.rm,10),1); renderFiles(); }));
+}
+['dragenter','dragover'].forEach(ev=> drop.addEventListener(ev,e=>{ e.preventDefault(); drop.classList.add('drag');}));
+['dragleave','drop'].forEach(ev=> drop.addEventListener(ev,e=>{ e.preventDefault(); if(ev==='drop'){ files.push(...Array.from(e.dataTransfer.files||[])); renderFiles(); } drop.classList.remove('drag'); }));
+fileInput.addEventListener('change',()=>{ files.push(...Array.from(fileInput.files||[])); fileInput.value=''; renderFiles(); });
 
 /************ Embeds UI ************/
 function addEmbed(pre={}){
-  const data={ title:pre.title||'', description:pre.description||'', color:pre.color||'#5865f2' };
-  embeds.push(data);
-  const idx=embeds.length-1;
-  const wrap=document.createElement('div');
-  wrap.className='embed-card';
-  wrap.innerHTML=`
-    <label>Title</label>
-    <input type="text" value="${esc(data.title)}" data-i="${idx}" data-f="title">
-    <label>Description</label>
-    <textarea data-i="${idx}" data-f="description">${esc(data.description)}</textarea>
-    <label>Color</label>
-    <input type="color" value="${data.color}" data-i="${idx}" data-f="color">
-    <button class="btn-alt" data-remove="${idx}">❌ Remove</button>
-  `;
-  embedsEl.appendChild(wrap);
-  wrap.querySelectorAll('input,textarea').forEach(inp=> inp.addEventListener('input', ()=>{ embeds[inp.dataset.i][inp.dataset.f]=inp.value; renderPreview(); }));
-  wrap.querySelector('[data-remove]').addEventListener('click', ()=>{ embeds.splice(idx,1); wrap.remove(); renderPreview(); });
-  renderPreview();
-}
-addEmbedBtn.addEventListener('click', ()=> addEmbed());
+  const data={ title:pre.title||'', description:pre.description||'', color:pre.color||'#5865f2', footer:pre.footer||'', image:pre.image||'', thumb:pre.thumb||'' };
+  embeds.push(data); const idx=embeds.length-1; const wrap=document.createElement('div'); wrap.className='embed-card'; wrap.innerHTML=`<label>Title</label><input type=\"text\" value=\"${esc(data.title)}\" data-i=\"${idx}\" data-f=\"title\"><label>Description</label><textarea data-i=\"${idx}\" data-f=\"description\">${esc(data.description)}</textarea><div style=\"display:grid; grid-template-columns:1fr 1fr; gap:10px\"><div><label>Color</label><input type=\"color\" value=\"${data.color}\" data-i=\"${idx}\" data-f=\"color\"></div><div><label>Footer</label><input type=\"text\" placeholder=\"Footer text\" data-i=\"${idx}\" data-f=\"footer\"></div></div><label>Image URL</label><input type=\"url\" placeholder=\"https://…\" data-i=\"${idx}\" data-f=\"image\"><label>Thumbnail URL</label><input type=\"url\" placeholder=\"https://…\" data-i=\"${idx}\" data-f=\"thumb\"><button class=\"btn-alt\" data-remove=\"${idx}\">❌ Remove</button>`; embedsEl.appendChild(wrap); wrap.querySelectorAll('input,textarea').forEach(inp=> inp.addEventListener('input', ()=>{ embeds[inp.dataset.i][inp.dataset.f]=inp.value; renderPreview(); })); wrap.querySelector('[data-remove]').addEventListener('click', ()=>{ embeds.splice(idx,1); wrap.remove(); renderPreview(); }); renderPreview(); }
+addEmbedBtn?.addEventListener('click', ()=> addEmbed());
 
-/************ Payload ************/
+/************ Build payload ************/
+function parseIds(s){ return (s||'').split(',').map(x=>x.trim()).filter(Boolean); }
 function buildEmbeds(){
-  // Only include embeds that have at least one of the allowed fields filled
-  return embeds.map(e=>{
-    const out={};
-    if(e.title) out.title=e.title;
-    if(e.description) out.description=e.description;
-    if(e.color) out.color=parseInt(e.color.replace('#',''),16); // Discord expects integer color
-    return out;
-  }).filter(e=> Object.keys(e).length>0);
+  const built = embeds.map(e=>{ const out={}; if(e.title) out.title=e.title; if(e.description) out.description=e.description; if(e.color) out.color=parseInt(e.color.replace('#',''),16); if(e.footer) out.footer={text:e.footer}; if(e.image) out.image={url:e.image}; if(e.thumb) out.thumbnail={url:e.thumb}; return out; }).filter(e=>Object.keys(e).length>0);
+  msgImages.forEach(u=>{ if(built.length<10) built.push({ image:{ url:u } }); });
+  return built.slice(0,10);
+}
+function buildAllowedMentions(){
+  const roles=parseIds(mentionRoles.value); const users=parseIds(mentionUsers.value);
+  const parse=[]; if(mentionEveryone?.checked || mentionHere?.checked){ parse.push('everyone'); }
+  return { parse, roles, users };
 }
 function buildPayload(){
-  const p={};
-  const c=(content.value||'').trim(); if(c) p.content=c; 
-  if(username.value) p.username=username.value; if(avatarURL.value) p.avatar_url=avatarURL.value;
-  const em=buildEmbeds(); if(em.length) p.embeds=em;
-  return p;
+  const p={}; let c=(content.value||'').trim(); if(mentionEveryone?.checked) c = `@everyone ${c}`; if(mentionHere?.checked) c = `@here ${c}`; if(c) p.content=c; if(username.value) p.username=username.value; if(avatarURL.value) p.avatar_url=avatarURL.value; const em = buildEmbeds(); if(em.length) p.embeds=em; const am=buildAllowedMentions(); if(am.parse.length||am.roles.length||am.users.length) p.allowed_mentions=am; return p;
 }
 
-/************ Send + Test ************/
-async function sendPayload(test=false){
+/************ History ************/
+function pushHistory(entry){ try{ const list=getHistory(); list.unshift(entry); while(list.length>50) list.pop(); localStorage.setItem(HIST_KEY, JSON.stringify(list)); renderHistory(); }catch{} }
+function getHistory(){ try{ return JSON.parse(localStorage.getItem(HIST_KEY)||'[]'); }catch{ return []; } }
+function renderHistory(){ const list=getHistory(); if(!list.length){ historyList.textContent='No history yet.'; return; } historyList.innerHTML = list.map((h,i)=>`<div class=\"history-item\"><div><div><strong>#${i+1}</strong> — ${new Date(h.ts).toLocaleString()}</div><div class=\"helper\">${esc(h.preview||'')}</div></div><div class=\"history-actions\"><button class=\"btn-alt\" data-load=\"${i}\">Load</button><button class=\"btn-alt\" data-resend=\"${i}\">Re-send</button></div></div>`).join(''); historyList.querySelectorAll('[data-load]').forEach(b=> b.addEventListener('click',()=>{ const h=getHistory()[parseInt(b.dataset.load,10)]; if(!h) return; // restore
+  username.value=h.payload.username||''; avatarURL.value=h.payload.avatar_url||''; content.value=h.payload.content||''; embeds = (h.payload.embeds||[]).map(e=>({ title:e.title||'', description:e.description||'', color: e.color?('#'+(e.color>>>0).toString(16).padStart(6,'0')):'#5865f2', footer:e.footer?.text||'', image:e.image?.url||'', thumb:e.thumbnail?.url||'' })); embedsEl.innerHTML=''; embeds.forEach(e=> addEmbed(e)); renderPreview(); updateCounts(); panels.message.classList.add('active'); tabs.forEach(t=> t.classList.toggle('active', t.dataset.tab==='message')); Object.values(panels).forEach(p=> p.classList.remove('active')); panels.message.classList.add('active'); })); historyList.querySelectorAll('[data-resend]').forEach(b=> b.addEventListener('click',async()=>{ const h=getHistory()[parseInt(b.dataset.resend,10)]; if(!h) return; webhookURL.value=h.webhook||webhookURL.value; try{ const r=await fetch(h.webhook,{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(h.payload)}); if(r.ok) showResp('Re-sent ✅', true); else showResp('Re-send failed', false);}catch(e){ showResp('Network error: '+e.message,false);} })); }
+
+/************ Send ************/
+async function sendPayload(){
   const url=webhookURL.value.trim(); if(!url){ return showResp('Enter webhook URL', false); }
-  const body = test? { content:'✅ Test from Webhook Manager' } : buildPayload();
-  if(!test && !body.content && !(body.embeds && body.embeds.length)){
-    return showResp('Add message text or an embed before sending.', false);
-  }
+  const jsonBody = buildPayload();
+  const hasFiles = files.length>0;
+  if(!hasFiles && !jsonBody.content && !(jsonBody.embeds && jsonBody.embeds.length)) return showResp('Add message or image/embed before sending.', false);
+
   try{
-    const r = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
-    const txt = await r.text();
-    let parsed; try{ parsed = JSON.parse(txt); }catch{}
-    if(r.ok){ showResp('Message sent ✅', true); return; }
-    // Improved error surface
-    if(parsed && parsed.message){
-      const details = parsed.errors ? JSON.stringify(parsed.errors) : '';
-      showResp(`Error: ${parsed.message}${details? ' — '+details: ''}`, false);
+    let r;
+    if(hasFiles){
+      const form=new FormData(); form.append('payload_json', JSON.stringify(jsonBody)); files.forEach(f=> form.append('file', f)); r = await fetch(url,{ method:'POST', body: form });
     } else {
-      showResp(`Error ${r.status}: ${txt || 'Request failed'}`, false);
+      r = await fetch(url,{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(jsonBody)});
     }
-  }catch(e){
-    showResp('Network error: '+e.message+ (location.protocol==='file:'? ' (tip: open in a regular browser)':''), false);
-  }
+    if(r.status===429){ const j=await r.json().catch(()=>({})); const wait = Math.ceil(((j.retry_after)||1)*1000); showResp(`Rate limited — retrying in ${Math.round(wait/1000)}s`, false); await new Promise(res=> setTimeout(res, wait)); return sendPayload(); }
+    const txt=await r.text(); let parsed; try{ parsed=JSON.parse(txt);}catch{}
+    if(r.ok){ showResp('Message sent ✅', true); pushHistory({ ts: Date.now(), webhook:url, payload: jsonBody, preview: (jsonBody.content||'') }); files=[]; renderFiles(); return; }
+    if(parsed && parsed.message){ const details = parsed.errors? JSON.stringify(parsed.errors):''; showResp(`Error: ${parsed.message}${details?' — '+details:''}`, false); }
+    else showResp(`Error ${r.status}: ${txt||'Request failed'}`, false);
+  }catch(e){ showResp('Network error: '+e.message + (location.protocol==='file:'?' (tip: open in a browser)':''), false); }
 }
 
-fabSend.addEventListener('click', ()=> sendPayload(false));
+fabSend?.addEventListener('click', sendPayload);
 
 /************ Utils ************/
-function showResp(text, ok){ resp.style.display='block'; resp.textContent=text; resp.className='response '+(ok?'ok':'err'); setTimeout(()=>{ resp.style.display='none'; }, 5000); }
+function showResp(text, ok){ resp.style.display='block'; resp.textContent=text; resp.className='response '+(ok?'ok':'err'); setTimeout(()=>{ resp.style.display='none'; }, 6000); }
 
 /************ Init ************/
 if(location.protocol==='file:'){ banner.style.display='block'; }
-renderPreview();
+renderPreview(); updateCounts(); renderHistory();
 </script>
 </body>
 </html>
