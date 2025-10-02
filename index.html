@@ -101,7 +101,7 @@ textarea{ min-height:110px; resize:vertical; }
 .name{ font-weight:900; color:#fff; }
 .embed{ border-left:4px solid #94a3ff; padding:10px 12px; margin-top:10px; border-radius:10px; background:linear-gradient(180deg,#ffffff10,#ffffff06); }
 
-/* Send button — noticeable idle animation */
+/* Floating actions */
 .fab{
   position:fixed; right:18px; bottom:18px; z-index:60;
   border:none; border-radius:999px; padding:16px 22px; font-weight:900;
@@ -120,6 +120,19 @@ textarea{ min-height:110px; resize:vertical; }
 @keyframes fabbreathe{ 0%,100%{box-shadow:0 16px 42px rgba(88,101,242,.30); transform:translateY(0) scale(1)} 50%{box-shadow:0 22px 58px rgba(88,101,242,.46); transform:translateY(-1px) scale(1.03)} }
 @keyframes fabpulse{ 0%,100%{transform:scale(.98);opacity:.55} 50%{transform:scale(1.08);opacity:.15} }
 @media (prefers-reduced-motion: reduce){ .fab,.fab::after{animation:none}}
+
+/* Clear button next to Send */
+.fab-clear{
+  position:fixed; right:140px; bottom:18px; z-index:59;
+  border:none; border-radius:999px; padding:14px 18px; font-weight:800;
+  color:#e6ebff; font-size:14px; cursor:pointer;
+  background:linear-gradient(135deg,#374151,#1f2937);
+  border:1px solid #475569;
+  box-shadow:0 12px 30px rgba(15,23,42,.4);
+  transition:transform .08s ease, box-shadow .2s ease;
+}
+.fab-clear:hover{ transform:translateY(-1px); box-shadow:0 16px 38px rgba(15,23,42,.55); }
+.fab-clear:active{ transform:translateY(1px); }
 
 /* Buttons */
 .btn-alt{ background:linear-gradient(180deg,#ffffff30,#ffffff15); color:#eaf0ff; border:1.5px solid var(--stroke); padding:10px 12px; border-radius:12px; cursor:pointer; }
@@ -172,6 +185,7 @@ textarea{ min-height:110px; resize:vertical; }
   .field-item{ grid-template-columns:1fr; }
   .field-actions{ justify-content:flex-end; }
   .embed-card .twocol{ display:block !important; }
+  .fab-clear{ right:130px; }
 }
 </style>
 </head>
@@ -180,7 +194,9 @@ textarea{ min-height:110px; resize:vertical; }
 <div class="bg-blob" aria-hidden="true"></div>
 <div class="bg-blob2" aria-hidden="true"></div>
 
-<button id="fabSend" class="fab">Send</button>
+<!-- NEW: Clear button next to Send (keeps your original Send intact) -->
+<button id="fabClear" class="fab-clear" title="Clear form">Clear</button>
+<button id="fabSend" class="fab" title="Send">Send</button>
 
 <div class="container">
   <h1>Discord Webhook Manager</h1>
@@ -297,7 +313,7 @@ const webhookURL=gid('webhookURL'), webhookExtra=gid('webhookExtra');
 const username=gid('username'), avatarURL=gid('avatarURL');
 const content=gid('content'), contentCount=gid('contentCount');
 const addEmbedBtn=gid('addEmbed'), embedsEl=gid('embeds');
-const preview=gid('preview'), resp=gid('resp'), fabSend=gid('fabSend');
+const preview=gid('preview'), resp=gid('resp'), fabSend=gid('fabSend'), fabClear=gid('fabClear');
 const mentionEveryone=gid('mentionEveryone'), mentionHere=gid('mentionHere');
 const mentionRoles=gid('mentionRoles'), mentionUsers=gid('mentionUsers');
 const imageInput=gid('imageInput'), addImageBtn=gid('addImage');
@@ -524,7 +540,6 @@ function renderHistory(){
     username.value=h.payload.username||''; avatarURL.value=h.payload.avatar_url||''; content.value=h.payload.content||'';
     embeds=(h.payload.embeds||[]).map(e=>({ title:e.title||'', description:e.description||'', color:e.color?('#'+(e.color>>>0).toString(16).padStart(6,'0')):'#5865f2', footer:e.footer?.text||'', image:e.image?.url||'', thumb:e.thumbnail?.url||'', fields:Array.isArray(e.fields)? e.fields.map(f=>({name:f.name||'', value:f.value||'', inline:!!f.inline})) : [], _imageFile:null, _thumbFile:null, _urlCache:{} }));
     embedsEl.innerHTML=''; embeds.forEach(e=> addEmbed(e)); queueRender();
-    // close modal back to Message tab
     closeHistoryModal();
     tabs.forEach(t=> t.classList.toggle('active', t.dataset.tab==='message')); Object.values(panels).forEach(p=> p.classList.remove('active')); panels.message.classList.add('active');
   }));
@@ -573,6 +588,32 @@ async function sendPayload(){
   if(ok){ files=[]; renderFiles(); }
 }
 fabSend?.addEventListener('click', sendPayload);
+
+/******** CLEAR FORM (new) *********/
+function clearForm(){
+  // confirm to avoid accidental clear
+  if(!confirm('Clear message form? (webhook URLs are kept)')) return;
+
+  // message basics
+  username.value=''; avatarURL.value=''; content.value='';
+
+  // mentions
+  mentionEveryone.checked=false; mentionHere.checked=false;
+  mentionRoles.value=''; mentionUsers.value='';
+
+  // images via link
+  msgImages.length=0; imageInput.value=''; imageList.innerHTML=''; imageThumbs.innerHTML='';
+
+  // files
+  files.length=0; fileInput.value=''; renderFiles();
+
+  // embeds
+  embeds.length=0; embedsEl.innerHTML='';
+
+  // preview / counters
+  queueRender();
+}
+fabClear?.addEventListener('click', clearForm);
 
 /******** init *********/
 (function init(){
