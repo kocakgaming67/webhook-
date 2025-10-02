@@ -194,7 +194,6 @@ textarea{ min-height:110px; resize:vertical; }
 <div class="bg-blob" aria-hidden="true"></div>
 <div class="bg-blob2" aria-hidden="true"></div>
 
-<!-- NEW: Clear button next to Send (keeps your original Send intact) -->
 <button id="fabClear" class="fab-clear" title="Clear form">Clear</button>
 <button id="fabSend" class="fab" title="Send">Send</button>
 
@@ -278,7 +277,9 @@ textarea{ min-height:110px; resize:vertical; }
       <hr style="margin:14px 0; border:none; height:1px; background:#ffffff22">
       <strong>Attachments</strong>
       <div id="drop" class="drop">Drop files here or <label for="fileInput" class="btn-alt" style="display:inline-flex">browse…</label>
-        <input id="fileInput" type="file" multiple style="display:none"></div>
+        <!-- any file type allowed -->
+        <input id="fileInput" type="file" multiple style="display:none">
+      </div>
       <div id="fileGrid" class="file-grid" style="margin-top:10px"></div>
     </section>
 
@@ -484,7 +485,7 @@ addEmbedBtn?.addEventListener('click', ()=> addEmbed());
 
 /******** payload + attachments *********/
 function parseIds(s){ return (s||'').split(',').map(x=>x.trim()).filter(Boolean); }
-function filenameSafe(name){ return (name||'file').replace(/[^\w\-.]+/g,'_').slice(0,80) || 'file'; }
+function filenameSafe(name){ return (name||'file').replace(/[^\w\-.]+/g,'_').slice(0,120) || 'file'; }
 function buildEmbedsAndAttachments(){
   const built=[]; const attachments=[];
   embeds.forEach((e,i)=>{
@@ -498,9 +499,9 @@ function buildEmbedsAndAttachments(){
         .filter(f=>(f.name||'').trim()||(f.value||'').trim());
       if(cleaned.length) out.fields=cleaned;
     }
-    if(e._imageFile){ const fname=filenameSafe(`embed${i+1}-image-${e._imageFile.name||'img'}`); attachments.push({file:e._imageFile,name:fname}); out.image={url:`attachment://${fname}`}; }
+    if(e._imageFile){ const fname=filenameSafe(`embed${i+1}-image-${e._imageFile.name||'img'}`); attachments.push({file:e._imageFile,name:fname, ref:'image'}); out.image={url:`attachment://${fname}`}; }
     else if((e.image||'').trim()){ out.image={url:e.image.trim()}; }
-    if(e._thumbFile){ const fname=filenameSafe(`embed${i+1}-thumb-${e._thumbFile.name||'thumb'}`); attachments.push({file:e._thumbFile,name:fname}); out.thumbnail={url:`attachment://${fname}`}; }
+    if(e._thumbFile){ const fname=filenameSafe(`embed${i+1}-thumb-${e._thumbFile.name||'thumb'}`); attachments.push({file:e._thumbFile,name:fname, ref:'thumb'}); out.thumbnail={url:`attachment://${fname}`}; }
     else if((e.thumb||'').trim()){ out.thumbnail={url:e.thumb.trim()}; }
     if(Object.keys(out).length) built.push(out);
   });
@@ -512,9 +513,9 @@ function buildPayloadAndAttachments(){
   const p={}; let c=(content.value||'').trim();
   if(mentionEveryone?.checked) c=`@everyone ${c}`; if(mentionHere?.checked) c=`@here ${c}`;
   if(c) p.content=c; if(username.value) p.username=username.value; if(avatarURL.value) p.avatar_url=avatarURL.value;
-  const {embeds: em, attachments}=buildEmbedsAndAttachments(); if(em.length) p.embeds=em;
+  const {embeds: em, attachments: embedAtts}=buildEmbedsAndAttachments(); if(em.length) p.embeds=em;
   const am=buildAllowedMentions(); if(am.parse.length||am.roles.length||am.users.length) p.allowed_mentions=am;
-  return { payload:p, attachments };
+  return { payload:p, embedAttachments: embedAtts };
 }
 
 /******** history (de-duplicated) *********/
@@ -562,24 +563,41 @@ clearHistory.addEventListener('click', clearHistoryData);
 /******** send *********/
 function parseWebhookList(){ const list=[]; const main=webhookURL.value.trim(); if(main) list.push(main); (webhookExtra.value||'').split('\n').map(s=>s.trim()).filter(Boolean).forEach(u=> list.push(u)); return [...new Set(list)]; }
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-async function sendToWebhook(url, payloadObj, fileList, embedAttachments){
-  const hasAnyFile=(fileList&&fileList.length)||(embedAttachments&&embedAttachments.length); let r;
-  if(hasAnyFile){ const form=new FormData(); form.append('payload_json', JSON.stringify(payloadObj)); (fileList||[]).forEach(f=> form.append('file', f)); (embedAttachments||[]).forEach(att=> att?.file && form.append('file', att.file, att.name)); r=await fetch(url,{ method:'POST', body: form }); }
-  else{ r=await fetch(url,{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payloadObj)}); }
-  if(r.status===429){ let retry=900; try{ const j=await r.json(); if(j.retry_after) retry=Math.ceil(Number(j.retry_after)*1000);}catch{} await sleep(retry); return sendToWebhook(url,payloadObj,fileList,embedAttachments); }
+
+async function sendToWebhook(url, payloadObj, allFiles){
+  const form=new FormData();
+  // map files to files[0], files[1], ...
+  allFiles.forEach((att, i) => { form.append(`files[${i}]`, att.file, att.name); });
+  // add attachments metadata for attachment:// use and to allow multi-file send
+  if(allFiles.length){
+    payloadObj.attachments = allFiles.map((att,i)=>({ id:i, filename:att.name }));
+  }
+  form.append('payload_json', JSON.stringify(payloadObj));
+  const r = await fetch(url,{ method:'POST', body: form });
+  if(r.status===429){
+    let retry=900; try{ const j=await r.json(); if(j.retry_after) retry=Math.ceil(Number(j.retry_after)*1000);}catch{}
+    await sleep(retry); return sendToWebhook(url, payloadObj, allFiles);
+  }
   return r;
 }
+
 async function sendPayload(){
   const urls=parseWebhookList(); if(!urls.length) return showResp('Enter at least one webhook URL', false);
-  const { payload, attachments } = buildPayloadAndAttachments();
-  const hasFiles=files.length>0;
-  if(!hasFiles && !attachments.length && !payload.content && !(payload.embeds&&payload.embeds.length)) return showResp('Add message or image/embed before sending.', false);
+
+  const { payload, embedAttachments } = buildPayloadAndAttachments();
+
+  // Combine: embed-attached images/thumbnails + message-level arbitrary files
+  const messageFiles = files.map(f => ({ file:f, name: filenameSafe(f.name||'file') }));
+  const allFiles = [...embedAttachments, ...messageFiles];
+
+  const hasAny = allFiles.length || payload.content || (payload.embeds && payload.embeds.length);
+  if(!hasAny) return showResp('Add message or attachments before sending.', false);
 
   let ok=0, fail=0;
   for(let i=0;i<urls.length;i++){
     try{
-      const r=await sendToWebhook(urls[i], payload, files, attachments);
-      const okNow=r.ok; ok += okNow?1:0; fail += okNow?0:1;
+      const r=await sendToWebhook(urls[i], {...payload}, allFiles);
+      const okNow=r.ok; ok+=okNow?1:0; fail+=okNow?0:1;
       if(okNow) pushHistory({ ts: Date.now(), webhook:urls[i], payload });
     }catch{ fail++; }
     if(i<urls.length-1) await sleep(200);
@@ -589,28 +607,15 @@ async function sendPayload(){
 }
 fabSend?.addEventListener('click', sendPayload);
 
-/******** CLEAR FORM (new) *********/
+/******** CLEAR FORM *********/
 function clearForm(){
-  // confirm to avoid accidental clear
   if(!confirm('Clear message form? (webhook URLs are kept)')) return;
-
-  // message basics
   username.value=''; avatarURL.value=''; content.value='';
-
-  // mentions
   mentionEveryone.checked=false; mentionHere.checked=false;
   mentionRoles.value=''; mentionUsers.value='';
-
-  // images via link
   msgImages.length=0; imageInput.value=''; imageList.innerHTML=''; imageThumbs.innerHTML='';
-
-  // files
   files.length=0; fileInput.value=''; renderFiles();
-
-  // embeds
   embeds.length=0; embedsEl.innerHTML='';
-
-  // preview / counters
   queueRender();
 }
 fabClear?.addEventListener('click', clearForm);
