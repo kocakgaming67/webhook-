@@ -3,256 +3,169 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Discord Webhook Manager — Glass + Motion</title>
+<title>Discord Webhook Manager</title>
 <style>
 :root{
   --accent:#5865f2; --accent-press:#4752c4;
-  --glass:#ffffff46; --glass-dark:#11182766;
-  --stroke:#ffffff55; --stroke-dark:#93c5fd22;
-  --text:#0e1015; --text-dark:#e6e6e6;
-  --muted:#94a3b8; --muted-dark:#a3b3c6;
-  --radius:16px; --shadow:0 24px 80px rgba(0,0,0,.25);
+  --glass:#ffffff24; --stroke:#ffffff30;
+  --text:#e8eeff; --muted:#cbd5e1;
+  --radius:16px;
 }
 *{box-sizing:border-box}
 html,body{height:100%}
 body{
-  margin:0;
-  font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial;
+  margin:0; font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial;
   color:var(--text);
   background:
-    radial-gradient(1200px 800px at 20% -10%, #6ee7ff22, transparent 60%),
-    radial-gradient(1000px 600px at 120% 30%, #8b5cf633, transparent 50%),
-    linear-gradient(180deg,#0a0e19,#0c1222 40%,#0a0e19);
+    radial-gradient(900px 560px at 15% -10%, #6ee7ff18, transparent 60%),
+    radial-gradient(760px 500px at 120% 30%, #8b5cf61a, transparent 50%),
+    linear-gradient(180deg,#0a0f19,#0b1120 40%,#0a0f19);
   overflow-x:hidden;
 }
-body.dark{
-  color:var(--text-dark);
-  background:
-    radial-gradient(1200px 800px at 20% -10%, #6ee7ff22, transparent 60%),
-    radial-gradient(1000px 600px at 120% 30%, #8b5cf633, transparent 50%),
-    linear-gradient(180deg,#090d16,#0b0f1a 40%,#090d16);
-}
+.container{ max-width:980px; margin:18px auto 120px; padding:0 14px; }
 
-/* Frosted glass overlay for extra diffusion */
-.glass-overlay{
-  position:fixed; inset:0; pointer-events:none; z-index:-1;
-  backdrop-filter: blur(18px) saturate(115%);
-  -webkit-backdrop-filter: blur(18px) saturate(115%);
-}
+/* gentle blobs (still animated but cheap) */
+.bg-blob,.bg-blob2{ position:fixed; width:40vmax; height:40vmax; border-radius:50%; filter:blur(60px); opacity:.2; z-index:-2; }
+.bg-blob{ background:#60a5fa; right:-18vmax; bottom:-14vmax; animation:float1 28s ease-in-out infinite; }
+.bg-blob2{ background:#a78bfa; left:-22vmax; top:-16vmax; animation:float2 32s ease-in-out infinite; }
+@keyframes float1{0%,100%{transform:translate(0,0)}50%{transform:translate(-4vmax,-2vmax)}}
+@keyframes float2{0%,100%{transform:translate(0,0)}50%{transform:translate(3vmax,2vmax)}}
+@media (prefers-reduced-motion: reduce){ .bg-blob,.bg-blob2{animation:none}}
 
-/* Animated background blobs */
-.bg-blob, .bg-blob2{
-  position:fixed; inset:auto; width:60vmax; height:60vmax;
-  border-radius:50%; filter:blur(90px); opacity:.35; z-index:-2;
-  transform:translate3d(0,0,0);
-}
-.bg-blob{ background:#60a5fa; right:-20vmax; bottom:-15vmax; animation:float1 22s ease-in-out infinite; }
-.bg-blob2{ background:#a78bfa; left:-25vmax; top:-20vmax; animation:float2 26s ease-in-out infinite; }
-@keyframes float1{ 0%,100%{ transform:translate(0,0) scale(1);} 50%{ transform:translate(-6vmax,-2vmax) scale(1.1);} }
-@keyframes float2{ 0%,100%{ transform:translate(0,0) scale(1);} 50%{ transform:translate(5vmax,3vmax) scale(1.08);} }
-
-/* Container */
-.container{ max-width:980px; margin:20px auto 120px; padding:0 14px; }
-
-/* Glass card */
+/* glass card (lighter blur/shadow) */
 .card{
-  background:linear-gradient(180deg,var(--glass),transparent), linear-gradient(0deg,transparent,transparent);
-  backdrop-filter: blur(14px) saturate(125%);
-  -webkit-backdrop-filter: blur(14px) saturate(125%);
+  background:linear-gradient(180deg,var(--glass),transparent);
+  backdrop-filter: blur(6px) saturate(120%);
+  -webkit-backdrop-filter: blur(6px) saturate(120%);
   border:1px solid var(--stroke);
   border-radius:var(--radius);
-  padding:18px;
-  margin:14px 0;
-  box-shadow: var(--shadow);
+  padding:16px; margin:12px 0;
+  box-shadow: 0 6px 24px rgba(0,0,0,.22);
 }
-body.dark .card{ background:linear-gradient(180deg,var(--glass-dark),transparent); border-color:var(--stroke-dark); }
 
-/* Sticky preview wrapper */
-.preview-wrapper{ position:sticky; top:10px; z-index:30; padding-top:8px; }
-.preview-wrapper .card{ margin-bottom:16px; }
-
-/* Heading */
-h1{
-  margin:6px 0 14px; font-weight:900; letter-spacing:.3px;
-  font-size:clamp(26px,4.5vw,40px);
-  color:#9ab2ff; text-shadow:0 6px 30px rgba(128,152,255,.55);
-  animation:fadeUp .6s ease both .05s;
-}
-@keyframes fadeUp{from{opacity:0; transform:translateY(8px)} to{opacity:1; transform:translateY(0)}}
+/* Sticky preview */
+.preview-wrapper{ position:sticky; top:10px; z-index:30; }
+h1{ margin:4px 0 12px; font-weight:900; letter-spacing:.3px; font-size:clamp(26px,4.5vw,40px); color:#b8c6ff; }
 
 /* Tabs */
-.tabs{ display:flex; gap:10px; flex-wrap:wrap; position:relative; z-index:1; }
+.tabs{ display:flex; gap:10px; flex-wrap:wrap; }
 .tab{
   padding:10px 16px; border-radius:999px; cursor:pointer;
   border:1px solid var(--stroke); color:#e7ecff;
-  background:linear-gradient(180deg,#ffffff2a,#ffffff17);
-  backdrop-filter: blur(10px);
-  transition:transform .12s ease, box-shadow .2s ease, background .2s ease;
+  background:linear-gradient(180deg,#ffffff22,#ffffff12);
+  transition:transform .08s ease, box-shadow .15s ease, background .15s ease;
 }
-.tab:hover{ transform:translateY(-2px); box-shadow:0 8px 30px rgba(120,140,255,.25); }
-.tab.active{
-  color:#fff; border-color:transparent;
-  background:linear-gradient(135deg,var(--accent),#7c83ff);
-  box-shadow:0 16px 40px rgba(88,101,242,.45);
-}
-.tab-panel{ display:none; animation:tabIn .28s ease; }
+.tab:hover{ transform:translateY(-1px); box-shadow:0 8px 18px rgba(120,140,255,.18); }
+.tab.active{ color:#fff; border-color:transparent; background:linear-gradient(135deg,var(--accent),#7c83ff); box-shadow:0 10px 26px rgba(88,101,242,.28); }
+.tab-panel{ display:none; }
 .tab-panel.active{ display:block; }
-@keyframes tabIn{ from{ opacity:0; transform:translateY(6px)} to{ opacity:1; transform:translateY(0)} }
 
 /* Inputs */
-label{ display:block; margin:10px 0 6px; font-weight:800; color:#c9d4ff; }
-input[type="text"], input[type="url"], input[type="color"], textarea, select{
-  width:100%; padding:13px 14px; border-radius:14px;
-  border:1.5px solid #e2e8f0; background:linear-gradient(180deg,#ffffffee,#ffffffdd);
-  font-size:16px; color:#0b1220;
-  transition:border-color .15s, box-shadow .2s, transform .06s ease;
+label{ display:block; margin:10px 0 6px; font-weight:800; color:#dfe6ff; }
+input[type="text"],input[type="url"],input[type="color"],textarea,select{
+  width:100%; padding:12px 14px; border-radius:14px;
+  border:1.5px solid #334155; background:linear-gradient(180deg,#0f1421,#0b111c);
+  color:#e9eefc; font-size:16px; transition:border-color .15s, box-shadow .15s;
 }
-input:focus, textarea:focus, select:focus{ outline:none; border-color:#93a4ff; box-shadow:0 8px 24px rgba(147,164,255,.35); }
-textarea{ min-height:120px; resize:vertical; }
-body.dark input,body.dark textarea,body.dark select{
-  border-color:#334155; background:linear-gradient(180deg,#101421f0,#0c111df0); color:#e9eefc;
-}
-.helper{ color:var(--muted); font-size:12px; }
-body.dark .helper{ color:var(--muted-dark);} 
-.counter{ font-size:12px; color:#cbd5e1; text-align:right; }
+input:focus,textarea:focus,select:focus{ outline:none; border-color:#8593ff; box-shadow:0 6px 16px rgba(147,164,255,.18); }
+textarea{ min-height:110px; resize:vertical; }
+.counter{ font-size:12px; color:var(--muted); text-align:right; }
 
-/* Quick Actions Toolbar */
+/* Toolbar */
 .toolbar{ display:flex; gap:8px; flex-wrap:wrap; margin:6px 0 8px; }
-.tbtn{
-  border:1px solid var(--stroke); border-radius:10px;
-  padding:6px 10px; background:linear-gradient(180deg,#ffffff66,#ffffff2d);
-  color:#eaf0ff; cursor:pointer;
-}
+.tbtn{ border:1px solid var(--stroke); border-radius:10px; padding:6px 10px; background:linear-gradient(180deg,#ffffff30,#ffffff17); color:#eaf0ff; cursor:pointer; }
 .tbtn:hover{ transform:translateY(-1px); }
-
-/* Custom file button (mobile safe) */
-.fileline{ display:flex; gap:8px; align-items:center; }
-.file-hidden{ position:absolute; opacity:0; width:1px; height:1px; pointer-events:none; }
-.file-btn{ display:inline-flex; align-items:center; gap:6px; padding:8px 12px; border-radius:10px; border:1px solid var(--stroke); background:linear-gradient(180deg,#ffffff70,#ffffff30); color:#eaf0ff; cursor:pointer; }
-.file-name{ font-size:12px; color:#e6ecff; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:160px; }
 
 /* Preview */
 .preview{
-  border:1px dashed rgba(255,255,255,.35);
+  border:1px dashed rgba(255,255,255,.24);
   border-radius:14px; padding:12px;
-  background:linear-gradient(180deg,#ffffff1a,#ffffff0d);
-  max-height:260px; overflow:auto; color:#ecf2ff;
+  background:linear-gradient(180deg,#ffffff10,#ffffff06);
+  max-height:230px; overflow:auto; color:#ecf2ff;
 }
 .msg{ display:flex; gap:12px; align-items:flex-start; }
-.msg .avatar{ width:44px; height:44px; border-radius:10px; object-fit:cover; box-shadow:0 10px 24px rgba(0,0,0,.3); }
-.msg .name{ font-weight:900; color:#fff; }
-.embed{
-  border-left:4px solid #94a3ff; padding:10px 12px; margin-top:10px; border-radius:10px;
-  background:linear-gradient(180deg, #ffffff15, #ffffff06);
-  box-shadow:inset 0 1px 0 #ffffff20;
-}
+.avatar{ width:44px; height:44px; border-radius:10px; object-fit:cover; }
+.name{ font-weight:900; color:#fff; }
+.embed{ border-left:4px solid #94a3ff; padding:10px 12px; margin-top:10px; border-radius:10px; background:linear-gradient(180deg,#ffffff10,#ffffff06); }
 
-/* Floating Send button */
+/* Send button with idle breathe */
 .fab{
   position:fixed; right:18px; bottom:18px; z-index:60;
-  border:none; border-radius:999px; padding:16px 20px; font-weight:900;
+  border:none; border-radius:999px; padding:16px 22px; font-weight:900;
   color:#fff; font-size:16px; cursor:pointer;
   background:linear-gradient(135deg,var(--accent),#7c83ff);
-  box-shadow:0 24px 60px rgba(88,101,242,.45);
-  display:flex; align-items:center; gap:10px;
-  transition:transform .08s ease; overflow:hidden;
+  box-shadow:0 16px 42px rgba(88,101,242,.32);
+  transition:transform .08s ease;
+  animation:fabbreathe 3s ease-in-out infinite;
 }
-.fab:active{ transform:translateY(1px) scale(.98); }
-.fab::after{
-  content:""; position:absolute; inset:0; background:linear-gradient(120deg,transparent 0%,#ffffff60 30%,transparent 60%);
-  transform:translateX(-120%); animation:shine 2.6s ease-in-out infinite;
-}
-@keyframes shine{ 0%{ transform:translateX(-120%);} 60%{ transform:translateX(140%);} 100%{ transform:translateX(140%);} }
-
-/* Secondary button */
-.btn-alt{
-  background:linear-gradient(180deg,#ffffff66,#ffffff30);
-  color:#eaf0ff; border:1.5px solid var(--stroke);
-  padding:8px 12px; border-radius:12px; cursor:pointer;
-  transition:transform .08s ease, box-shadow .15s ease, background .2s ease;
-}
-.btn-alt:hover{ transform:translateY(-2px); box-shadow:0 10px 30px rgba(120,140,255,.28); }
-
-/* Embed config card */
-.embed-card{
-  border:1px solid var(--stroke); border-radius:14px; padding:12px; margin:12px 0;
-  background:linear-gradient(180deg,#ffffff2a,#ffffff12); backdrop-filter:blur(10px);
+.fab:active{ transform:translateY(1px) scale(.985); }
+@keyframes fabbreathe{
+  0%,100%{ box-shadow:0 16px 42px rgba(88,101,242,.30); transform:translateY(0) }
+  50%{ box-shadow:0 20px 54px rgba(88,101,242,.42); transform:translateY(-1px) }
 }
 
-/* Drag & drop */
-.drop{
-  border:2px dashed rgba(255,255,255,.35); border-radius:14px; padding:18px; text-align:center;
-  background:linear-gradient(180deg,#ffffff15,#ffffff05);
-  transition:border-color .15s, background .15s, transform .12s ease;
-}
-.drop.drag{ border-color:#a5b4ff; background:linear-gradient(180deg,#a5b4ff2a,#a5b4ff12); transform:scale(1.01); }
+/* Buttons */
+.btn-alt{ background:linear-gradient(180deg,#ffffff30,#ffffff15); color:#eaf0ff; border:1.5px solid var(--stroke); padding:10px 12px; border-radius:12px; cursor:pointer; }
+.btn-alt:hover{ transform:translateY(-2px); box-shadow:0 10px 22px rgba(120,140,255,.2); }
+.btn-wide{ display:block; width:100%; text-align:center; }
+
+/* Embed editor */
+.embed-card{ border:1px solid var(--stroke); border-radius:14px; padding:12px; margin:12px 0; background:linear-gradient(180deg,#ffffff1e,#ffffff0d); }
+
+/* DnD Files */
+.drop{ border:2px dashed rgba(255,255,255,.24); border-radius:14px; padding:18px; text-align:center; background:linear-gradient(180deg,#ffffff10,#ffffff06); }
+.drop.drag{ border-color:#a5b4ff; background:linear-gradient(180deg,#a5b4ff20,#a5b4ff10); }
 .file-grid{ display:flex; flex-wrap:wrap; gap:12px; }
-.file-card{ border:1px solid var(--stroke); border-radius:12px; padding:8px; width:150px;
-  display:flex; flex-direction:column; gap:8px; align-items:center;
-  background:linear-gradient(180deg,#ffffff2a,#ffffff12); backdrop-filter:blur(8px);
-  transition:transform .12s ease, box-shadow .15s ease; }
-.file-card:hover{ transform:translateY(-2px); box-shadow:0 14px 30px rgba(0,0,0,.25); }
+.file-card{ border:1px solid var(--stroke); border-radius:12px; padding:8px; width:150px; display:flex; flex-direction:column; gap:8px; align-items:center; background:linear-gradient(180deg,#ffffff1e,#ffffff0c); }
 .file-card img{ width:100%; height:96px; object-fit:cover; border-radius:10px; }
 .file-card .name{ font-size:12px; text-align:center; color:#e8eeff; }
 .file-card button{ border:none; background:#ef4444; color:#fff; border-radius:9px; padding:4px 8px; cursor:pointer; }
 
+/* Pills for message images */
 .pills{ display:flex; flex-wrap:wrap; gap:8px; }
-.pill{ display:flex; gap:8px; align-items:center; border:1px solid var(--stroke); border-radius:999px; padding:6px 12px; background:linear-gradient(180deg,#ffffff3a,#ffffff18); color:#eaf0ff; }
+.pill{ display:flex; gap:8px; align-items:center; border:1px solid var(--stroke); border-radius:999px; padding:6px 12px; background:linear-gradient(180deg,#ffffff26,#ffffff12); color:#eaf0ff; }
 .pill button{ border:none; background:#ef4444; color:#fff; border-radius:999px; padding:4px 6px; cursor:pointer; }
 .thumb{ width:78px; height:78px; object-fit:cover; border-radius:10px; border:1px solid var(--stroke); }
 
-/* Toast / response / banner */
-.toast{ position:fixed; right:18px; bottom:96px; background:#111827e6; color:#fff; padding:10px 14px; border-radius:12px; display:none; box-shadow:0 20px 60px rgba(0,0,0,.35); }
+/* Response */
 .response{ margin-top:10px; padding:12px; border-radius:12px; font-weight:800; display:none; }
-.response.ok{ background:#16a34a1a; color:#a7f3d0; border:1px solid #16a34a55; }
-.response.err{ background:#dc26261a; color:#fecaca; border:1px solid #dc262655; }
-.banner{ background:#f59e0b22; color:#ffe9c2; padding:10px 12px; border-radius:12px; margin:10px 0; font-size:14px; display:none; border:1px solid #fbbf2450; }
+.response.ok{ background:#0f3d1f; color:#b2f5c9; border:1px solid #1e8548; }
+.response.err{ background:#3d1414; color:#ffcaca; border:1px solid #8c2a2a; }
 
-/* --- Embed Fields UI --- */
-.field-list { display:flex; flex-direction:column; gap:8px; margin-top:8px; }
-.field-item {
-  display:grid; grid-template-columns: 1fr 1fr auto auto; gap:8px; align-items:center;
-  border:1px solid var(--stroke); border-radius:10px; padding:8px;
-  background:linear-gradient(180deg,#ffffff2a,#ffffff12);
-}
-body.dark .field-item{ border-color:var(--stroke-dark); }
-.field-item .mini { display:flex; gap:8px; align-items:center; white-space:nowrap; color:#eaf0ff; }
-.field-item button { border:none; border-radius:8px; padding:6px 8px; cursor:pointer; }
-.field-actions { display:flex; gap:6px; }
+/* Fields UI */
+.field-list{ display:flex; flex-direction:column; gap:8px; margin-top:8px; }
+.field-item{ display:grid; grid-template-columns:1fr 1fr auto auto; gap:8px; align-items:center; border:1px solid var(--stroke); border-radius:10px; padding:8px; background:linear-gradient(180deg,#ffffff1e,#ffffff0c); }
+.field-item .mini{ display:flex; gap:8px; align-items:center; white-space:nowrap; color:#eaf0ff; }
+.field-actions{ display:flex; gap:6px; }
+.field-item button{ border:none; border-radius:8px; padding:6px 8px; cursor:pointer; }
 
-/* Mobile fixes / responsive grids */
+/* History list (lighter) */
+#historyList .row{ display:flex; justify-content:space-between; align-items:center; gap:10px; border:1px solid var(--stroke); border-radius:12px; padding:10px 12px; background:linear-gradient(180deg,#ffffff1e,#ffffff0d); margin:8px 0; }
+#historyList .acts{ display:flex; gap:8px; }
+
+/* Responsive */
 @media (max-width:560px){
-  .field-item{ grid-template-columns: 1fr; }
+  .field-item{ grid-template-columns:1fr; }
   .field-actions{ justify-content:flex-end; }
   .embed-card .twocol{ display:block !important; }
-  .file-name{ max-width:120px; }
-}
-@media (prefers-reduced-motion: reduce){
-  .bg-blob,.bg-blob2,.fab::after{ animation:none !important; }
-  .tab-panel{ animation:none !important; }
 }
 </style>
 </head>
 <body>
 
-<!-- animated blobs + frost overlay -->
 <div class="bg-blob" aria-hidden="true"></div>
 <div class="bg-blob2" aria-hidden="true"></div>
-<div class="glass-overlay" aria-hidden="true"></div>
 
-<button id="fabSend" class="fab">🚀 Send</button>
+<button id="fabSend" class="fab">Send</button>
 
 <div class="container">
   <h1>Discord Webhook Manager</h1>
-  <div id="banner" class="banner">⚠️ Running from a local file or preview app may block network requests (CORS). For live sending, open this file in a regular browser.</div>
 
   <!-- Sticky preview -->
   <div class="preview-wrapper">
     <div class="card">
-      <strong style="color:#dbe3ff">Preview</strong>
-      <div id="preview" class="preview" aria-live="polite">
-        <div class="helper">Start typing to see a live preview…</div>
-      </div>
+      <strong>Preview</strong>
+      <div id="preview" class="preview" aria-live="polite"></div>
       <div id="resp" class="response"></div>
     </div>
   </div>
@@ -264,204 +177,152 @@ body.dark .field-item{ border-color:var(--stroke-dark); }
       <div class="tab" data-tab="embeds" role="tab">Embeds</div>
       <div class="tab" data-tab="mentions" role="tab">Mentions</div>
       <div class="tab" data-tab="history" role="tab">History</div>
-      <div class="tab" data-tab="settings" role="tab">Settings</div>
     </div>
 
+    <!-- Webhook -->
     <section id="tab-webhook" class="tab-panel active" role="tabpanel">
       <label for="webhookURL">Webhook URL</label>
-      <input id="webhookURL" type="url" placeholder="https://discord.com/api/webhooks/..." autocomplete="url"/>
-      <div class="helper">Paste the full Discord webhook URL for the channel you want to post to.</div>
+      <input id="webhookURL" type="url" placeholder="https://discord.com/api/webhooks/..."/>
 
-      <label for="webhookExtra" style="margin-top:12px;">Additional webhooks (one per line, optional)</label>
+      <label for="webhookExtra" style="margin-top:12px;">Additional webhooks (one per line)</label>
       <textarea id="webhookExtra" placeholder="https://discord.com/api/webhooks/...\nhttps://discord.com/api/webhooks/..." style="height:90px"></textarea>
-      <div class="helper">We’ll broadcast to these too (throttled + rate-limit aware).</div>
     </section>
 
+    <!-- Message -->
     <section id="tab-message" class="tab-panel" role="tabpanel">
       <label for="username">Username</label>
-      <input id="username" type="text" placeholder="Displayed username (optional)"/>
+      <input id="username" type="text" placeholder="Optional"/>
 
       <label for="avatarURL">Avatar URL</label>
-      <input id="avatarURL" type="url" placeholder="https://… (optional)"/>
+      <input id="avatarURL" type="url" placeholder="https://…"/>
 
       <label for="content">Message</label>
-
-      <!-- Quick Actions Toolbar -->
-      <div class="toolbar" aria-label="Quick actions">
-        <button class="tbtn" data-md="**|**"><b>B</b></button>
-        <button class="tbtn" data-md="*|*"><i>I</i></button>
-        <button class="tbtn" data-md="`|`"><code>code</code></button>
-        <button class="tbtn" data-md="> |"><span>❝</span> Quote</button>
+      <div class="toolbar">
+        <button class="tbtn" data-md="**|**">Bold</button>
+        <button class="tbtn" data-md="*|*">Italic</button>
+        <button class="tbtn" data-md="`|`">Code</button>
+        <button class="tbtn" data-md="> |">Quote</button>
         <button class="tbtn" data-link>Link</button>
-        <button class="tbtn" data-emoji>😀</button>
       </div>
-
       <textarea id="content" placeholder="Type your message…"></textarea>
       <div class="counter" id="contentCount">0 / 2000</div>
 
       <hr style="margin:14px 0; border:none; height:1px; background:#ffffff22">
-      <strong style="color:#dbe3ff">Images via link</strong>
-      <div class="helper">Add one or more image URLs to include under the message.</div>
+      <strong>Images via link</strong>
       <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:8px">
         <input id="imageInput" type="url" placeholder="https://example.com/image.png" style="flex:1 1 280px">
-        <button class="btn-alt" id="addImage">➕ Add</button>
+        <button class="btn-alt" id="addImage">Add</button>
       </div>
       <div id="imageList" class="pills" style="margin-top:10px"></div>
       <div id="imageThumbs" style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px"></div>
 
       <hr style="margin:14px 0; border:none; height:1px; background:#ffffff22">
-      <strong style="color:#dbe3ff">Attachments (drag & drop)</strong>
+      <strong>Attachments</strong>
       <div id="drop" class="drop">Drop files here or <label for="fileInput" class="btn-alt" style="display:inline-flex">browse…</label>
         <input id="fileInput" type="file" multiple style="display:none"></div>
       <div id="fileGrid" class="file-grid" style="margin-top:10px"></div>
     </section>
 
+    <!-- Embeds -->
     <section id="tab-embeds" class="tab-panel" role="tabpanel">
-      <button class="btn-alt" id="addEmbed">➕ Add Embed</button>
+      <button class="btn-alt btn-wide" id="addEmbed">Add Embed</button>
       <div id="embeds"></div>
-      <div class="helper" style="margin-top:8px">Each embed supports Title, Description, Color, Image URL, Thumbnail URL, Footer, <b>Fields</b>, and file attachments for image/thumbnail. Max 10 embeds total (including message-level image links).</div>
     </section>
 
+    <!-- Mentions -->
     <section id="tab-mentions" class="tab-panel" role="tabpanel">
-      <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
-        <label style="display:flex; gap:8px; align-items:center; color:#e6ecff;"><input type="checkbox" id="mentionEveryone"> @everyone</label>
-        <label style="display:flex; gap:8px; align-items:center; color:#e6ecff;"><input type="checkbox" id="mentionHere"> @here</label>
+      <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-bottom:8px;">
+        <label style="display:flex; gap:8px; align-items:center;"><input type="checkbox" id="mentionEveryone"> @everyone</label>
+        <label style="display:flex; gap:8px; align-items:center;"><input type="checkbox" id="mentionHere"> @here</label>
       </div>
       <label>Role IDs (comma separated)</label>
       <input id="mentionRoles" type="text" placeholder="12345,67890"/>
       <label>User IDs (comma separated)</label>
       <input id="mentionUsers" type="text" placeholder="11111,22222"/>
-      <div class="helper">Tips: Role/User IDs bisa diambil dari Discord (Developer Mode). Allowed mentions akan dibatasi sesuai input ini supaya aman, tidak spam semua orang.</div>
     </section>
 
+    <!-- History -->
     <section id="tab-history" class="tab-panel" role="tabpanel">
-      <div id="historyList" class="helper">No history yet.</div>
-    </section>
-
-    <section id="tab-settings" class="tab-panel" role="tabpanel">
-      <label style="display:flex;gap:8px;align-items:center; color:#e6ecff;">
-        <input type="checkbox" id="darkToggle"/> Enable Dark Mode
-      </label>
+      <div id="historyList">No history yet.</div>
     </section>
   </div>
 </div>
 
-<div id="toast" class="toast">Copied</div>
-
 <script>
-/************ Elements ************/
+/******** elements *********/
 const tabs=[...document.querySelectorAll('.tab')];
-const panels={ webhook:tab('webhook'), message:tab('message'), embeds:tab('embeds'), mentions:tab('mentions'), history:tab('history'), settings:tab('settings') };
-function tab(id){ return document.getElementById('tab-'+id); }
+const panels={ webhook:gid('tab-webhook'), message:gid('tab-message'), embeds:gid('tab-embeds'), mentions:gid('tab-mentions'), history:gid('tab-history') };
+const webhookURL=gid('webhookURL'), webhookExtra=gid('webhookExtra');
+const username=gid('username'), avatarURL=gid('avatarURL');
+const content=gid('content'), contentCount=gid('contentCount');
+const addEmbedBtn=gid('addEmbed'), embedsEl=gid('embeds');
+const preview=gid('preview'), resp=gid('resp'), fabSend=gid('fabSend');
+const mentionEveryone=gid('mentionEveryone'), mentionHere=gid('mentionHere');
+const mentionRoles=gid('mentionRoles'), mentionUsers=gid('mentionUsers');
+const imageInput=gid('imageInput'), addImageBtn=gid('addImage');
+const imageList=gid('imageList'), imageThumbs=gid('imageThumbs');
+const drop=gid('drop'), fileInput=gid('fileInput'), fileGrid=gid('fileGrid');
+const historyList=gid('historyList'); const toolbar=document.querySelector('.toolbar');
+function gid(id){ return document.getElementById(id); }
 
-const webhookURL=el('webhookURL'), webhookExtra=el('webhookExtra');
-const username=el('username'), avatarURL=el('avatarURL');
-const content=el('content'), contentCount=el('contentCount');
-const addEmbedBtn=el('addEmbed'), embedsEl=el('embeds');
-const preview=el('preview'), resp=el('resp'), banner=el('banner');
-const darkToggle=el('darkToggle'), fabSend=el('fabSend');
-const mentionEveryone=el('mentionEveryone'), mentionHere=el('mentionHere');
-const mentionRoles=el('mentionRoles'), mentionUsers=el('mentionUsers');
+/******** state *********/
+let embeds=[]; let msgImages=[]; let files=[];
+const HIST_KEY='discord_webhook_history_v4';
 
-// Images & files
-const imageInput=el('imageInput'), addImageBtn=el('addImage');
-const imageList=el('imageList'), imageThumbs=el('imageThumbs');
-const drop=el('drop'), fileInput=el('fileInput'), fileGrid=el('fileGrid');
+/******** tabs *********/
+tabs.forEach(t=>t.addEventListener('click',()=>{ tabs.forEach(x=>x.classList.remove('active')); t.classList.add('active'); Object.values(panels).forEach(p=>p.classList.remove('active')); panels[t.dataset.tab].classList.add('active'); }));
 
-// History
-const historyList=el('historyList'); const HIST_KEY='discord_webhook_history_v2';
-
-// toolbar
-const toolbar=document.querySelector('.toolbar');
-
-let embeds=[];         // {title, description, color, footer, image, thumb, fields[], _imageFile, _thumbFile}
-let msgImages=[];      // url[]
-let files=[];          // File[]
-
-function el(id){ return document.getElementById(id); }
-
-/************ Tabs ************/
-tabs.forEach(t=>t.addEventListener('click',()=>{
-  tabs.forEach(x=>x.classList.remove('active'));
-  t.classList.add('active');
-  Object.values(panels).forEach(p=>p.classList.remove('active'));
-  panels[t.dataset.tab].classList.add('active');
-}));
-
-/************ Theme ************/
-function applyTheme(dark){ document.body.classList.toggle('dark', dark); localStorage.setItem('webhook_dark', dark?'1':'0'); }
-darkToggle?.addEventListener('change', e=> applyTheme(e.target.checked));
-(function(){ const saved=localStorage.getItem('webhook_dark'); const dark=saved? saved==='1' : (matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches); if(darkToggle) darkToggle.checked=dark; applyTheme(dark); })();
-
-/************ Helpers ************/
+/******** helpers *********/
 const esc=s=>String(s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
 const validUrl=u=>{ try{ const x=new URL(u); return ['http:','https:'].includes(x.protocol);}catch{ return false; } };
-function showResp(text, ok){ resp.style.display='block'; resp.textContent=text; resp.className='response '+(ok?'ok':'err'); setTimeout(()=>{ resp.style.display='none'; }, 6000); }
+function showResp(text, ok){ resp.style.display='block'; resp.textContent=text; resp.className='response '+(ok?'ok':'err'); setTimeout(()=>{ resp.style.display='none'; }, 4200); }
 
-/************ Quick Actions Toolbar ************/
+/******** toolbar *********/
 toolbar.addEventListener('click',e=>{
   const btn=e.target.closest('button'); if(!btn) return;
-  if(btn.dataset.md){ wrapSelection(content, ...btn.dataset.md.split('|')); return updatePreviewCounts(); }
-  if(btn.dataset.link){ const sel=getSel(content)||'text'; wrapSelection(content,'[','](https://)'); if(sel===''){ placeCaret(content, content.selectionStart-1); } return updatePreviewCounts(); }
-  if(btn.dataset.emoji){ insertAtCursor(content,' 😀 '); return updatePreviewCounts(); }
+  if(btn.dataset.md){ wrapSelection(content, ...btn.dataset.md.split('|')); queueRender(); return; }
+  if(btn.dataset.link){ wrapSelection(content,'[','](https://)'); queueRender(); return; }
 });
-function getSel(t){ return t.value.substring(t.selectionStart,t.selectionEnd); }
-function wrapSelection(t, pre, post){ const s=t.selectionStart, e=t.selectionEnd; const val=t.value; const sel=val.slice(s,e); const out=val.slice(0,s)+pre+sel+post+val.slice(e); t.value=out; const offset=pre.length; t.setSelectionRange(s+offset, e+offset); t.focus(); }
-function insertAtCursor(t, text){ const s=t.selectionStart, e=t.selectionEnd; t.value=t.value.slice(0,s)+text+t.value.slice(e); const p=s+text.length; t.setSelectionRange(p,p); t.focus(); }
-function placeCaret(t, pos){ t.setSelectionRange(pos,pos); t.focus(); }
+function wrapSelection(t, pre, post){ const s=t.selectionStart, e=t.selectionEnd, v=t.value; t.value=v.slice(0,s)+pre+v.slice(s,e)+post+v.slice(e); const d=pre.length; t.setSelectionRange(s+d,e+d); t.focus(); }
 
-/************ Preview ************/
+/******** preview (throttled) *********/
+let renderQueued=false;
+function queueRender(){ if(renderQueued) return; renderQueued=true; requestAnimationFrame(()=>{ renderQueued=false; renderPreview(); }); }
+[username,avatarURL,content].forEach(el=> el.addEventListener('input', queueRender));
+
 function renderPreview(){
-  const name=esc(username.value||'Webhook');
-  const avatar=esc(avatarURL.value||'https://cdn.discordapp.com/embed/avatars/0.png');
-  const msg=esc(content.value||'');
+  const name=esc(username.value||'Webhook'); const avatar=esc(avatarURL.value||'https://cdn.discordapp.com/embed/avatars/0.png'); const msg=esc(content.value||'');
+  const n=(content.value||'').length; contentCount.textContent=`${n} / 2000`; contentCount.style.color = n>2000 ? '#fecaca' : '#cbd5e1';
   let html=`<div class="msg"><img class="avatar" src="${avatar}" alt="avatar"/><div><div class="name">${name}</div><div style="margin-top:6px;white-space:pre-wrap">${msg}</div></div></div>`;
-  if(msgImages.length){
-    html += `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">` +
-      msgImages.map(u=>`<img class="thumb" src="${esc(u)}" alt="image"/>`).join('') + `</div>`;
-  }
+  if(msgImages.length){ html += `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">` + msgImages.map(u=>`<img class="thumb" src="${esc(u)}" alt="image"/>`).join('') + `</div>`; }
   embeds.forEach(e=>{
     const color=e.color||'#5865f2';
-    const imgLocal = e._imageFile ? URL.createObjectURL(e._imageFile) : null;
-    const thumbLocal = e._thumbFile ? URL.createObjectURL(e._thumbFile) : null;
+    const imgSrc = e._urlCache?.img || (e._imageFile ? (e._urlCache={...e._urlCache, img:URL.createObjectURL(e._imageFile)}, e._urlCache.img) : e.image || '');
+    const thSrc  = e._urlCache?.th  || (e._thumbFile ? (e._urlCache={...e._urlCache, th:URL.createObjectURL(e._thumbFile)}, e._urlCache.th) : e.thumb || '');
     html+=`<div class="embed" style="border-color:${esc(color)}">`+
       (e.title?`<div style="font-weight:800">${esc(e.title)}</div>`:'')+
       (e.description?`<div style="margin-top:6px;white-space:pre-wrap">${esc(e.description)}</div>`:'')+
-      ((imgLocal||e.image)?`<div style="margin-top:8px"><img src="${esc(imgLocal||e.image)}" class="thumb" style="width:auto;height:120px" alt="embed image"></div>`:'')+
-      ((thumbLocal||e.thumb)?`<div style="margin-top:8px"><img src="${esc(thumbLocal||e.thumb)}" class="thumb" alt="thumbnail"></div>`:'')+
+      (imgSrc?`<div style="margin-top:8px"><img src="${esc(imgSrc)}" class="thumb" style="width:auto;height:120px" alt="embed image"></div>`:'')+
+      (thSrc?`<div style="margin-top:8px"><img src="${esc(thSrc)}" class="thumb" alt="thumbnail"></div>`:'')+
       (Array.isArray(e.fields)&&e.fields.length? `<div style="margin-top:8px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px">${e.fields.map(f=>`<div style="background:#ffffff10;border:1px solid #ffffff22;border-radius:8px;padding:6px"><div style="font-weight:800">${esc(f.name||'')}</div><div style="white-space:pre-wrap">${esc(f.value||'')}</div></div>`).join('')}</div>`:'')+
       (e.footer?`<div style="margin-top:8px;font-size:12px;opacity:.8">${esc(e.footer)}</div>`:'')+
       `</div>`;
   });
   preview.innerHTML=html;
 }
-function updatePreviewCounts(){ renderPreview(); const n=(content.value||'').length; contentCount.textContent=`${n} / 2000`; contentCount.style.color = n>2000 ? '#fecaca' : '#cbd5e1'; }
-[username,avatarURL,content].forEach(el=> el.addEventListener('input', updatePreviewCounts));
+renderPreview();
 
-/************ Images via link ************/
-function renderImages(){
-  imageList.innerHTML = msgImages.map((u,i)=>`<span class="pill"><span>${esc(u)}</span><button data-rm="${i}">×</button></span>`).join('');
-  imageList.querySelectorAll('[data-rm]').forEach(b=> b.addEventListener('click',()=>{ msgImages.splice(parseInt(b.dataset.rm,10),1); renderImages(); updatePreviewCounts(); }));
-  imageThumbs.innerHTML = msgImages.map(u=>`<img class="thumb" src="${esc(u)}" alt="img">`).join('');
-}
-addImageBtn?.addEventListener('click',()=>{ const u=imageInput.value.trim(); if(!u) return; if(!validUrl(u)) return showResp('Invalid image URL', false); if(msgImages.length>=10) return showResp('Max 10 images', false); msgImages.push(u); imageInput.value=''; renderImages(); updatePreviewCounts(); });
+/******** images via link *********/
+function renderImages(){ imageList.innerHTML = msgImages.map((u,i)=>`<span class="pill"><span>${esc(u)}</span><button data-rm="${i}">×</button></span>`).join(''); imageList.querySelectorAll('[data-rm]').forEach(b=> b.addEventListener('click',()=>{ msgImages.splice(parseInt(b.dataset.rm,10),1); renderImages(); queueRender(); })); imageThumbs.innerHTML = msgImages.map(u=>`<img class="thumb" src="${esc(u)}" alt="img">`).join(''); }
+addImageBtn?.addEventListener('click',()=>{ const u=imageInput.value.trim(); if(!u) return; if(!validUrl(u)) return showResp('Invalid image URL', false); if(msgImages.length>=10) return showResp('Max 10 images', false); msgImages.push(u); imageInput.value=''; renderImages(); queueRender(); });
 
-/************ Drag & drop files ************/
-function renderFiles(){
-  fileGrid.innerHTML = files.map((f,i)=>{
-    const isImg = /^image\//.test(f.type);
-    const url = isImg ? URL.createObjectURL(f) : '';
-    return `<div class="file-card">${isImg?`<img src="${url}" alt="${esc(f.name)}"/>`:`<div class="helper" style="height:96px;display:flex;align-items:center;justify-content:center;">${esc(f.type||'file')}</div>`}<div class="name">${esc(f.name)}</div><button data-rm="${i}">Remove</button></div>`;
-  }).join('');
-  fileGrid.querySelectorAll('[data-rm]').forEach(b=> b.addEventListener('click',()=>{ files.splice(parseInt(b.dataset.rm,10),1); renderFiles(); }));
-}
+/******** files (DnD) *********/
+function renderFiles(){ fileGrid.innerHTML = files.map((f,i)=>{ const isImg = /^image\//.test(f.type); const url = isImg ? URL.createObjectURL(f) : ''; return `<div class="file-card">${isImg?`<img src="${url}" alt="${esc(f.name)}"/>`:`<div style="height:96px;display:flex;align-items:center;justify-content:center;">${esc(f.type||'file')}</div>`}<div class="name">${esc(f.name)}</div><button data-rm="${i}">Remove</button></div>`; }).join(''); fileGrid.querySelectorAll('[data-rm]').forEach(b=> b.addEventListener('click',()=>{ files.splice(parseInt(b.dataset.rm,10),1); renderFiles(); })); }
 ['dragenter','dragover'].forEach(ev=> drop.addEventListener(ev,e=>{ e.preventDefault(); drop.classList.add('drag');}));
 ['dragleave','drop'].forEach(ev=> drop.addEventListener(ev,e=>{ e.preventDefault(); if(ev==='drop'){ files.push(...Array.from(e.dataTransfer.files||[])); renderFiles(); } drop.classList.remove('drag'); }));
 fileInput.addEventListener('change',()=>{ files.push(...Array.from(fileInput.files||[])); fileInput.value=''; renderFiles(); });
 
-/************ Embeds UI + Fields + File attachments ************/
-function filenameFromInput(inp){ return inp?.files?.[0]?.name || ''; }
-
+/******** embeds + fields + file attachments *********/
 function renderFieldRow(embedIndex, fieldIndex, container){
   const f = embeds[embedIndex].fields[fieldIndex];
   const row = document.createElement('div');
@@ -471,7 +332,7 @@ function renderFieldRow(embedIndex, fieldIndex, container){
     <input type="text" placeholder="Field value" value="${esc(f.value||'')}">
     <div class="mini">
       <label><input type="checkbox" ${f.inline?'checked':''}> inline</label>
-      <button class="btn-alt" data-clear>🧹</button>
+      <button class="btn-alt" data-clear>Clear</button>
     </div>
     <div class="field-actions">
       <button class="btn-alt" data-up>↑</button>
@@ -482,129 +343,89 @@ function renderFieldRow(embedIndex, fieldIndex, container){
   const [nameEl, valueEl] = row.querySelectorAll('input[type="text"]');
   const inlineEl = row.querySelector('input[type="checkbox"]');
 
-  nameEl.addEventListener('input', ()=>{ embeds[embedIndex].fields[fieldIndex].name = nameEl.value; updatePreviewCounts(); });
-  valueEl.addEventListener('input', ()=>{ embeds[embedIndex].fields[fieldIndex].value = valueEl.value; updatePreviewCounts(); });
-  inlineEl.addEventListener('change', ()=>{ embeds[embedIndex].fields[fieldIndex].inline = inlineEl.checked; updatePreviewCounts(); });
-  row.querySelector('[data-clear]').addEventListener('click', ()=>{ embeds[embedIndex].fields[fieldIndex].name=''; embeds[embedIndex].fields[fieldIndex].value=''; nameEl.value=''; valueEl.value=''; updatePreviewCounts(); });
+  nameEl.addEventListener('input', ()=>{ embeds[embedIndex].fields[fieldIndex].name = nameEl.value; queueRender(); });
+  valueEl.addEventListener('input', ()=>{ embeds[embedIndex].fields[fieldIndex].value = valueEl.value; queueRender(); });
+  inlineEl.addEventListener('change', ()=>{ embeds[embedIndex].fields[fieldIndex].inline = inlineEl.checked; queueRender(); });
+  row.querySelector('[data-clear]').addEventListener('click', ()=>{ embeds[embedIndex].fields[fieldIndex].name=''; embeds[embedIndex].fields[fieldIndex].value=''; nameEl.value=''; valueEl.value=''; queueRender(); });
 
   row.querySelector('[data-up]').addEventListener('click', ()=>{
     if(fieldIndex<=0) return; const arr=embeds[embedIndex].fields;
     [arr[fieldIndex-1], arr[fieldIndex]] = [arr[fieldIndex], arr[fieldIndex-1]];
-    renderFields(embedIndex, container); updatePreviewCounts();
+    renderFields(embedIndex, container); queueRender();
   });
   row.querySelector('[data-down]').addEventListener('click', ()=>{
     const arr=embeds[embedIndex].fields; if(fieldIndex>=arr.length-1) return;
     [arr[fieldIndex+1], arr[fieldIndex]] = [arr[fieldIndex], arr[fieldIndex+1]];
-    renderFields(embedIndex, container); updatePreviewCounts();
+    renderFields(embedIndex, container); queueRender();
   });
   row.querySelector('[data-del]').addEventListener('click', ()=>{
-    embeds[embedIndex].fields.splice(fieldIndex,1); renderFields(embedIndex, container); updatePreviewCounts();
+    embeds[embedIndex].fields.splice(fieldIndex,1); renderFields(embedIndex, container); queueRender();
   });
   container.appendChild(row);
 }
 function renderFields(embedIndex, container){ container.innerHTML = ''; embeds[embedIndex].fields.forEach((_,i)=> renderFieldRow(embedIndex, i, container)); }
 
 function addEmbed(pre={}){
-  const data={
-    title:pre.title||'',
-    description:pre.description||'',
-    color:pre.color||'#5865f2',
-    footer:pre.footer||'',
-    image:pre.image||'',
-    thumb:pre.thumb||'',
-    fields: Array.isArray(pre.fields)? pre.fields.map(f=>({name:f.name||'', value:f.value||'', inline:!!f.inline})) : [],
-    _imageFile:null, _thumbFile:null
-  };
+  const data={ title:pre.title||'', description:pre.description||'', color:pre.color||'#5865f2', footer:pre.footer||'', image:pre.image||'', thumb:pre.thumb||'', fields:Array.isArray(pre.fields)? pre.fields.map(f=>({name:f.name||'', value:f.value||'', inline:!!f.inline})) : [], _imageFile:null, _thumbFile:null, _urlCache:{} };
   embeds.push(data); const idx=embeds.length-1;
 
   const wrap=document.createElement('div'); wrap.className='embed-card';
   wrap.innerHTML=`
-    <label>Title</label>
-    <input type="text" value="${esc(data.title)}" data-i="${idx}" data-f="title">
-
-    <label>Description</label>
-    <textarea data-i="${idx}" data-f="description">${esc(data.description)}</textarea>
+    <label>Title</label><input type="text" value="${esc(data.title)}" data-i="${idx}" data-f="title">
+    <label>Description</label><textarea data-i="${idx}" data-f="description">${esc(data.description)}</textarea>
 
     <div class="twocol" style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
-      <div>
-        <label>Color</label>
-        <input type="color" value="${data.color}" data-i="${idx}" data-f="color">
-      </div>
-      <div>
-        <label>Footer</label>
-        <input type="text" placeholder="Footer text" value="${esc(data.footer)}" data-i="${idx}" data-f="footer">
-      </div>
+      <div><label>Color</label><input type="color" value="${data.color}" data-i="${idx}" data-f="color"></div>
+      <div><label>Footer</label><input type="text" placeholder="Footer text" value="${esc(data.footer)}" data-i="${idx}" data-f="footer"></div>
     </div>
 
-    <label>Image URL (optional)</label>
-    <input type="url" placeholder="https://…" value="${esc(data.image)}" data-i="${idx}" data-f="image">
-
-    <label>Thumbnail URL (optional)</label>
-    <input type="url" placeholder="https://…" value="${esc(data.thumb)}" data-i="${idx}" data-f="thumb">
+    <label>Image URL</label><input type="url" placeholder="https://…" value="${esc(data.image)}" data-i="${idx}" data-f="image">
+    <label>Thumbnail URL</label><input type="url" placeholder="https://…" value="${esc(data.thumb)}" data-i="${idx}" data-f="thumb">
 
     <div class="twocol" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:8px">
-      <div>
-        <label>Embed Image (file)</label>
-        <input id="imgfile-${idx}" class="file-hidden" type="file" accept="image/*" data-i="${idx}" data-fx="imgfile">
-        <div class="fileline"><label class="file-btn" for="imgfile-${idx}">📎 Choose File</label><span class="file-name" data-fn-img></span></div>
-        <div class="helper">If set, embed image uses <code>attachment://filename</code>.</div>
-      </div>
-      <div>
-        <label>Embed Thumbnail (file)</label>
-        <input id="thumbfile-${idx}" class="file-hidden" type="file" accept="image/*" data-i="${idx}" data-fx="thumbfile">
-        <div class="fileline"><label class="file-btn" for="thumbfile-${idx}">📎 Choose File</label><span class="file-name" data-fn-th></span></div>
-        <div class="helper">If set, thumbnail uses <code>attachment://filename</code>.</div>
-      </div>
+      <div><label>Embed Image (file)</label><input type="file" accept="image/*" data-i="${idx}" data-fx="imgfile"></div>
+      <div><label>Embed Thumbnail (file)</label><input type="file" accept="image/*" data-i="${idx}" data-fx="thumbfile"></div>
     </div>
 
     <hr style="margin:10px 0; border:none; height:1px; background:#ffffff22">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
-      <strong style="color:#dbe3ff">Fields</strong>
+      <strong>Fields</strong>
       <div style="display:flex;gap:8px">
-        <button class="btn-alt" data-addfield="${idx}">➕ Add Field</button>
-        <button class="btn-alt" data-clearall="${idx}">🧹 Clear All</button>
+        <button class="btn-alt" data-addfield="${idx}">Add Field</button>
+        <button class="btn-alt" data-clearall="${idx}">Clear All</button>
       </div>
     </div>
     <div class="field-list" data-fl="${idx}"></div>
 
-    <div style="margin-top:8px">
-      <button class="btn-alt" data-remove="${idx}">❌ Remove Embed</button>
-    </div>
+    <div style="margin-top:8px"><button class="btn-alt" data-remove="${idx}">Remove Embed</button></div>
   `;
   embedsEl.appendChild(wrap);
 
   wrap.querySelectorAll('input[type="text"],input[type="url"],input[type="color"],textarea').forEach(inp=>{
-    if(inp.dataset.f){ inp.addEventListener('input', ()=>{ embeds[inp.dataset.i][inp.dataset.f]=inp.value; updatePreviewCounts(); }); }
+    if(inp.dataset.f){ inp.addEventListener('input', ()=>{ embeds[inp.dataset.i][inp.dataset.f]=inp.value; queueRender(); }); }
   });
-
-  // File inputs
   wrap.querySelectorAll('input[type="file"][data-fx]').forEach(inp=>{
     inp.addEventListener('change', ()=>{
       const i=parseInt(inp.dataset.i,10);
       const f=(inp.files && inp.files[0])? inp.files[0]: null;
-      if(inp.dataset.fx==='imgfile'){ embeds[i]._imageFile=f; wrap.querySelector('[data-fn-img]').textContent=filenameFromInput(inp); }
-      if(inp.dataset.fx==='thumbfile'){ embeds[i]._thumbFile=f; wrap.querySelector('[data-fn-th]').textContent=filenameFromInput(inp); }
-      updatePreviewCounts();
+      if(inp.dataset.fx==='imgfile'){ embeds[i]._imageFile=f; embeds[i]._urlCache.img && URL.revokeObjectURL(embeds[i]._urlCache.img); embeds[i]._urlCache.img=null; }
+      if(inp.dataset.fx==='thumbfile'){ embeds[i]._thumbFile=f; embeds[i]._urlCache.th && URL.revokeObjectURL(embeds[i]._urlCache.th); embeds[i]._urlCache.th=null; }
+      queueRender();
     });
   });
 
-  // Fields UI
   const listEl = wrap.querySelector('[data-fl]');
   renderFields(idx, listEl);
-  wrap.querySelector('[data-addfield]').addEventListener('click', ()=>{ embeds[idx].fields.push({name:'',value:'',inline:false}); renderFields(idx, listEl); updatePreviewCounts(); });
-  wrap.querySelector('[data-clearall]').addEventListener('click', ()=>{ embeds[idx].fields=[]; renderFields(idx, listEl); updatePreviewCounts(); });
-
-  // Remove embed
-  wrap.querySelector('[data-remove]').addEventListener('click', ()=>{ embeds.splice(idx,1); wrap.remove(); updatePreviewCounts(); });
-
-  updatePreviewCounts();
+  wrap.querySelector('[data-addfield]').addEventListener('click', ()=>{ embeds[idx].fields.push({name:'',value:'',inline:false}); renderFields(idx, listEl); queueRender(); });
+  wrap.querySelector('[data-clearall]').addEventListener('click', ()=>{ embeds[idx].fields=[]; renderFields(idx, listEl); queueRender(); });
+  wrap.querySelector('[data-remove]').addEventListener('click', ()=>{ embeds.splice(idx,1); wrap.remove(); queueRender(); });
+  queueRender();
 }
 addEmbedBtn?.addEventListener('click', ()=> addEmbed());
 
-/************ Build payload + attachments ************/
+/******** payload + attachments *********/
 function parseIds(s){ return (s||'').split(',').map(x=>x.trim()).filter(Boolean); }
 function filenameSafe(name){ return (name||'file').replace(/[^\w\-.]+/g,'_').slice(0,80) || 'file'; }
-
 function buildEmbedsAndAttachments(){
   const built=[]; const attachments=[];
   embeds.forEach((e,i)=>{
@@ -614,7 +435,9 @@ function buildEmbedsAndAttachments(){
     if(e.color) out.color=parseInt(e.color.replace('#',''),16);
     if(e.footer) out.footer={text:e.footer};
     if(Array.isArray(e.fields)&&e.fields.length){
-      out.fields=e.fields.map(f=>({name:f.name||'', value:f.value||'', inline:!!f.inline})).filter(f=>(f.name||'').trim()||(f.value||'').trim());
+      const cleaned=e.fields.map(f=>({name:f.name||'', value:f.value||'', inline:!!f.inline}))
+        .filter(f=>(f.name||'').trim()||(f.value||'').trim());
+      if(cleaned.length) out.fields=cleaned;
     }
     if(e._imageFile){ const fname=filenameSafe(`embed${i+1}-image-${e._imageFile.name||'img'}`); attachments.push({file:e._imageFile,name:fname}); out.image={url:`attachment://${fname}`}; }
     else if((e.image||'').trim()){ out.image={url:e.image.trim()}; }
@@ -635,68 +458,71 @@ function buildPayloadAndAttachments(){
   return { payload:p, attachments };
 }
 
-/************ History ************/
-function pushHistory(entry){ try{ const list=getHistory(); list.unshift(entry); while(list.length>50) list.pop(); localStorage.setItem(HIST_KEY, JSON.stringify(list)); renderHistory(); }catch{} }
+/******** history (de-duplicated) *********/
+function payloadKey(webhook, payload){ return webhook + '|' + JSON.stringify(payload, Object.keys(payload).sort()); }
 function getHistory(){ try{ return JSON.parse(localStorage.getItem(HIST_KEY)||'[]'); }catch{ return []; } }
+function setHistory(list){ try{ localStorage.setItem(HIST_KEY, JSON.stringify(list.slice(0,100))); }catch{} }
+function pushHistory(entry){
+  const list=getHistory(); const key=payloadKey(entry.webhook, entry.payload);
+  const idx=list.findIndex(x=> payloadKey(x.webhook,x.payload)===key);
+  if(idx>=0){ list.splice(idx,1); }
+  list.unshift(entry); setHistory(list); renderHistory();
+}
 function renderHistory(){
   const list=getHistory();
-  if(!list.length){ historyList.textContent='No history yet.'; return; }
-  historyList.innerHTML = list.map((h,i)=>`<div class="file-card" style="width:auto;align-items:stretch"><div><strong>#${i+1}</strong> — ${new Date(h.ts).toLocaleString()}<div class="helper">${esc(h.preview||'')}</div></div><div style="display:flex;gap:8px;align-items:center"><button class="btn-alt" data-load="${i}">Load</button><button class="btn-alt" data-resend="${i}">Re-send</button></div></div>`).join('');
+  historyList.innerHTML = list.length? list.map((h,i)=>`
+    <div class="row"><div><strong>#${i+1}</strong> — ${new Date(h.ts).toLocaleString()}</div>
+      <div class="acts">
+        <button class="btn-alt" data-load="${i}">Load</button>
+        <button class="btn-alt" data-resend="${i}">Re-send</button>
+      </div></div>`).join('') : 'No history yet.';
   historyList.querySelectorAll('[data-load]').forEach(b=> b.addEventListener('click',()=>{
     const h=getHistory()[parseInt(b.dataset.load,10)]; if(!h) return;
     username.value=h.payload.username||''; avatarURL.value=h.payload.avatar_url||''; content.value=h.payload.content||'';
-    embeds=(h.payload.embeds||[]).map(e=>({ title:e.title||'', description:e.description||'', color:e.color?('#'+(e.color>>>0).toString(16).padStart(6,'0')):'#5865f2', footer:e.footer?.text||'', image:e.image?.url||'', thumb:e.thumbnail?.url||'', fields:Array.isArray(e.fields)? e.fields.map(f=>({name:f.name||'', value:f.value||'', inline:!!f.inline})) : [], _imageFile:null, _thumbFile:null }));
-    embedsEl.innerHTML=''; embeds.forEach(e=> addEmbed(e)); updatePreviewCounts();
+    embeds=(h.payload.embeds||[]).map(e=>({ title:e.title||'', description:e.description||'', color:e.color?('#'+(e.color>>>0).toString(16).padStart(6,'0')):'#5865f2', footer:e.footer?.text||'', image:e.image?.url||'', thumb:e.thumbnail?.url||'', fields:Array.isArray(e.fields)? e.fields.map(f=>({name:f.name||'', value:f.value||'', inline:!!f.inline})) : [], _imageFile:null, _thumbFile:null, _urlCache:{} }));
+    embedsEl.innerHTML=''; embeds.forEach(e=> addEmbed(e)); queueRender();
     tabs.forEach(t=> t.classList.toggle('active', t.dataset.tab==='message')); Object.values(panels).forEach(p=> p.classList.remove('active')); panels.message.classList.add('active');
   }));
   historyList.querySelectorAll('[data-resend]').forEach(b=> b.addEventListener('click',async()=>{
-    const h=getHistory()[parseInt(b.dataset.resend,10)]; if(!h) return; const w=h.webhook||webhookURL.value.trim();
-    try{ const r=await fetch(w,{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(h.payload)}); if(r.ok) showResp('Re-sent ✅', true); else showResp('Re-send failed', false);}catch(e){ showResp('Network error: '+e.message,false); }
+    const h=getHistory()[parseInt(b.dataset.resend,10)]; if(!h) return; try{
+      const r=await fetch(h.webhook,{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(h.payload)}); showResp(r.ok?'Re-sent':'Re-send failed', r.ok);
+    }catch(e){ showResp('Network error: '+e.message,false); }
   }));
 }
 
-/************ Multi-webhook send ************/
+/******** send *********/
 function parseWebhookList(){ const list=[]; const main=webhookURL.value.trim(); if(main) list.push(main); (webhookExtra.value||'').split('\n').map(s=>s.trim()).filter(Boolean).forEach(u=> list.push(u)); return [...new Set(list)]; }
-function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 async function sendToWebhook(url, payloadObj, fileList, embedAttachments){
   const hasAnyFile=(fileList&&fileList.length)||(embedAttachments&&embedAttachments.length); let r;
-  if(hasAnyFile){
-    const form=new FormData(); form.append('payload_json', JSON.stringify(payloadObj));
-    (fileList||[]).forEach(f=> form.append('file', f));
-    (embedAttachments||[]).forEach(att=> att?.file && form.append('file', att.file, att.name));
-    r=await fetch(url,{ method:'POST', body: form });
-  } else {
-    r=await fetch(url,{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payloadObj)});
-  }
-  if(r.status===429){ let retry=1000; try{ const j=await r.json(); if(j.retry_after) retry=Math.ceil(Number(j.retry_after)*1000);}catch{} await sleep(retry); return sendToWebhook(url,payloadObj,fileList,embedAttachments); }
+  if(hasAnyFile){ const form=new FormData(); form.append('payload_json', JSON.stringify(payloadObj)); (fileList||[]).forEach(f=> form.append('file', f)); (embedAttachments||[]).forEach(att=> att?.file && form.append('file', att.file, att.name)); r=await fetch(url,{ method:'POST', body: form }); }
+  else{ r=await fetch(url,{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payloadObj)}); }
+  if(r.status===429){ let retry=900; try{ const j=await r.json(); if(j.retry_after) retry=Math.ceil(Number(j.retry_after)*1000);}catch{} await sleep(retry); return sendToWebhook(url,payloadObj,fileList,embedAttachments); }
   return r;
 }
 async function sendPayload(){
   const urls=parseWebhookList(); if(!urls.length) return showResp('Enter at least one webhook URL', false);
   const { payload, attachments } = buildPayloadAndAttachments();
   const hasFiles=files.length>0;
-  if(!hasFiles && !attachments.length && !payload.content && !(payload.embeds&&payload.embeds.length))
-    return showResp('Add message or image/embed before sending.', false);
+  if(!hasFiles && !attachments.length && !payload.content && !(payload.embeds&&payload.embeds.length)) return showResp('Add message or image/embed before sending.', false);
 
-  let okCount=0, failCount=0;
+  let ok=0, fail=0;
   for(let i=0;i<urls.length;i++){
     try{
       const r=await sendToWebhook(urls[i], payload, files, attachments);
-      const txt=await r.text(); let parsed; try{ parsed=JSON.parse(txt);}catch{}
-      if(r.ok){ okCount++; pushHistory({ ts: Date.now(), webhook:urls[i], payload, preview:(payload.content||'') }); }
-      else { failCount++; console.warn('Error', parsed?.message||r.status, parsed?.errors||txt); }
-    }catch(e){ failCount++; console.error('Network error:',e); }
-    if(i<urls.length-1) await sleep(250);
+      const okNow=r.ok; ok += okNow?1:0; fail += okNow?0:1;
+      if(okNow) pushHistory({ ts: Date.now(), webhook:urls[i], payload });
+    }catch{ fail++; }
+    if(i<urls.length-1) await sleep(200);
   }
-  if(okCount && !failCount){ showResp(`Sent ✅ (${okCount}/${urls.length})`, true); files=[]; renderFiles(); }
-  else if(okCount && failCount){ showResp(`Partial: ${okCount} sent, ${failCount} failed`, false); }
-  else { showResp(`All failed (${failCount})`, false); }
+  showResp(ok && !fail ? `Sent (${ok}/${urls.length})` : ok ? `Partial (${ok}/${urls.length})` : 'Failed', !!ok);
+  if(ok){ files=[]; renderFiles(); }
 }
 fabSend?.addEventListener('click', sendPayload);
 
-/************ Init ************/
-if(location.protocol==='file:'){ banner.style.display='block'; }
-updatePreviewCounts(); renderImages(); renderFiles(); renderHistory();
+/******** init *********/
+function renderImagesInit(){ imageList.innerHTML=''; imageThumbs.innerHTML=''; }
+renderImagesInit(); renderFiles(); renderHistory(); renderPreview();
 </script>
 </body>
 </html>
