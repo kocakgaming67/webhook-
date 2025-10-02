@@ -24,7 +24,7 @@ body{
 }
 .container{ max-width:980px; margin:18px auto 120px; padding:0 14px; }
 
-/* gentle blobs (still animated but cheap) */
+/* gentle blobs */
 .bg-blob,.bg-blob2{ position:fixed; width:40vmax; height:40vmax; border-radius:50%; filter:blur(60px); opacity:.2; z-index:-2; }
 .bg-blob{ background:#60a5fa; right:-18vmax; bottom:-14vmax; animation:float1 28s ease-in-out infinite; }
 .bg-blob2{ background:#a78bfa; left:-22vmax; top:-16vmax; animation:float2 32s ease-in-out infinite; }
@@ -32,7 +32,7 @@ body{
 @keyframes float2{0%,100%{transform:translate(0,0)}50%{transform:translate(3vmax,2vmax)}}
 @media (prefers-reduced-motion: reduce){ .bg-blob,.bg-blob2{animation:none}}
 
-/* glass card (lighter blur/shadow) */
+/* glass card */
 .card{
   background:linear-gradient(180deg,var(--glass),transparent);
   backdrop-filter: blur(6px) saturate(120%);
@@ -47,8 +47,9 @@ body{
 .preview-wrapper{ position:sticky; top:10px; z-index:30; }
 h1{ margin:4px 0 12px; font-weight:900; letter-spacing:.3px; font-size:clamp(26px,4.5vw,40px); color:#b8c6ff; }
 
-/* Tabs */
-.tabs{ display:flex; gap:10px; flex-wrap:wrap; }
+/* Tabs + history icon */
+.tabs{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:10px; }
+.tabs-grow{ flex:1 1 auto; display:flex; gap:10px; flex-wrap:wrap; }
 .tab{
   padding:10px 16px; border-radius:999px; cursor:pointer;
   border:1px solid var(--stroke); color:#e7ecff;
@@ -57,8 +58,20 @@ h1{ margin:4px 0 12px; font-weight:900; letter-spacing:.3px; font-size:clamp(26p
 }
 .tab:hover{ transform:translateY(-1px); box-shadow:0 8px 18px rgba(120,140,255,.18); }
 .tab.active{ color:#fff; border-color:transparent; background:linear-gradient(135deg,var(--accent),#7c83ff); box-shadow:0 10px 26px rgba(88,101,242,.28); }
-.tab-panel{ display:none; }
+.tab-panel{ display:none; margin-top:12px; }
 .tab-panel.active{ display:block; }
+.tab-panel > :first-child{ margin-top:6px; }
+
+/* tiny icon button (history clock) */
+.tab-icon{
+  margin-left:auto; display:inline-flex; align-items:center; justify-content:center;
+  width:42px; height:42px; border-radius:999px; cursor:pointer;
+  border:1px solid var(--stroke);
+  background:linear-gradient(180deg,#ffffff26,#ffffff10);
+  transition:transform .08s ease, box-shadow .15s ease;
+}
+.tab-icon:hover{ transform:translateY(-1px); box-shadow:0 8px 18px rgba(120,140,255,.18); }
+.tab-icon svg{ width:20px; height:20px; stroke:#e8eeff; }
 
 /* Inputs */
 label{ display:block; margin:10px 0 6px; font-weight:800; color:#dfe6ff; }
@@ -88,7 +101,7 @@ textarea{ min-height:110px; resize:vertical; }
 .name{ font-weight:900; color:#fff; }
 .embed{ border-left:4px solid #94a3ff; padding:10px 12px; margin-top:10px; border-radius:10px; background:linear-gradient(180deg,#ffffff10,#ffffff06); }
 
-/* Send button with idle breathe */
+/* Send button — noticeable idle animation */
 .fab{
   position:fixed; right:18px; bottom:18px; z-index:60;
   border:none; border-radius:999px; padding:16px 22px; font-weight:900;
@@ -96,13 +109,17 @@ textarea{ min-height:110px; resize:vertical; }
   background:linear-gradient(135deg,var(--accent),#7c83ff);
   box-shadow:0 16px 42px rgba(88,101,242,.32);
   transition:transform .08s ease;
-  animation:fabbreathe 3s ease-in-out infinite;
+  animation:fabbreathe 2.6s ease-in-out infinite;
 }
 .fab:active{ transform:translateY(1px) scale(.985); }
-@keyframes fabbreathe{
-  0%,100%{ box-shadow:0 16px 42px rgba(88,101,242,.30); transform:translateY(0) }
-  50%{ box-shadow:0 20px 54px rgba(88,101,242,.42); transform:translateY(-1px) }
+.fab::after{
+  content:""; position:absolute; inset:-6px; border-radius:inherit;
+  border:2px solid rgba(124,131,255,.35); pointer-events:none;
+  transform:scale(.98); opacity:.55; animation:fabpulse 2.6s ease-in-out infinite;
 }
+@keyframes fabbreathe{ 0%,100%{box-shadow:0 16px 42px rgba(88,101,242,.30); transform:translateY(0) scale(1)} 50%{box-shadow:0 22px 58px rgba(88,101,242,.46); transform:translateY(-1px) scale(1.03)} }
+@keyframes fabpulse{ 0%,100%{transform:scale(.98);opacity:.55} 50%{transform:scale(1.08);opacity:.15} }
+@media (prefers-reduced-motion: reduce){ .fab,.fab::after{animation:none}}
 
 /* Buttons */
 .btn-alt{ background:linear-gradient(180deg,#ffffff30,#ffffff15); color:#eaf0ff; border:1.5px solid var(--stroke); padding:10px 12px; border-radius:12px; cursor:pointer; }
@@ -139,11 +156,18 @@ textarea{ min-height:110px; resize:vertical; }
 .field-actions{ display:flex; gap:6px; }
 .field-item button{ border:none; border-radius:8px; padding:6px 8px; cursor:pointer; }
 
-/* History list (lighter) */
+/* History modal */
+.modal-backdrop{ position:fixed; inset:0; background:rgba(5,8,15,.55); display:none; z-index:70; }
+.modal{ position:fixed; inset:auto 0 0 0; margin:auto; top:8%; max-width:840px; width:calc(100% - 28px); z-index:80; display:none; }
+.modal .card{ max-height:70vh; overflow:auto; }
+#historyList{ margin-top:8px; }
 #historyList .row{ display:flex; justify-content:space-between; align-items:center; gap:10px; border:1px solid var(--stroke); border-radius:12px; padding:10px 12px; background:linear-gradient(180deg,#ffffff1e,#ffffff0d); margin:8px 0; }
 #historyList .acts{ display:flex; gap:8px; }
 
-/* Responsive */
+/* spacing polish */
+#tab-embeds #addEmbed.btn-wide{ width:100%; margin-top:10px; margin-bottom:8px; }
+#embeds{ margin-top:10px; }
+
 @media (max-width:560px){
   .field-item{ grid-template-columns:1fr; }
   .field-actions{ justify-content:flex-end; }
@@ -172,11 +196,19 @@ textarea{ min-height:110px; resize:vertical; }
 
   <div class="card">
     <div class="tabs" role="tablist">
-      <div class="tab active" data-tab="webhook" role="tab">Webhook</div>
-      <div class="tab" data-tab="message" role="tab">Message</div>
-      <div class="tab" data-tab="embeds" role="tab">Embeds</div>
-      <div class="tab" data-tab="mentions" role="tab">Mentions</div>
-      <div class="tab" data-tab="history" role="tab">History</div>
+      <div class="tabs-grow">
+        <div class="tab active" data-tab="webhook" role="tab">Webhook</div>
+        <div class="tab" data-tab="message" role="tab">Message</div>
+        <div class="tab" data-tab="embeds" role="tab">Embeds</div>
+      </div>
+      <!-- history icon -->
+      <button id="historyBtn" class="tab-icon" title="History" aria-label="History">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+          <path d="M3 12a9 9 0 1 0 3-6.7" stroke="currentColor" />
+          <path d="M3 3v6h6" stroke="currentColor" />
+          <path d="M12 7v5l3 2" stroke="currentColor" />
+        </svg>
+      </button>
     </div>
 
     <!-- Webhook -->
@@ -208,6 +240,17 @@ textarea{ min-height:110px; resize:vertical; }
       <div class="counter" id="contentCount">0 / 2000</div>
 
       <hr style="margin:14px 0; border:none; height:1px; background:#ffffff22">
+      <strong>Mentions</strong>
+      <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin:8px 0;">
+        <label style="display:flex; gap:8px; align-items:center;"><input type="checkbox" id="mentionEveryone"> @everyone</label>
+        <label style="display:flex; gap:8px; align-items:center;"><input type="checkbox" id="mentionHere"> @here</label>
+      </div>
+      <label>Role IDs (comma separated)</label>
+      <input id="mentionRoles" type="text" placeholder="12345,67890"/>
+      <label>User IDs (comma separated)</label>
+      <input id="mentionUsers" type="text" placeholder="11111,22222"/>
+
+      <hr style="margin:14px 0; border:none; height:1px; background:#ffffff22">
       <strong>Images via link</strong>
       <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:8px">
         <input id="imageInput" type="url" placeholder="https://example.com/image.png" style="flex:1 1 280px">
@@ -228,30 +271,28 @@ textarea{ min-height:110px; resize:vertical; }
       <button class="btn-alt btn-wide" id="addEmbed">Add Embed</button>
       <div id="embeds"></div>
     </section>
+  </div>
+</div>
 
-    <!-- Mentions -->
-    <section id="tab-mentions" class="tab-panel" role="tabpanel">
-      <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-bottom:8px;">
-        <label style="display:flex; gap:8px; align-items:center;"><input type="checkbox" id="mentionEveryone"> @everyone</label>
-        <label style="display:flex; gap:8px; align-items:center;"><input type="checkbox" id="mentionHere"> @here</label>
+<!-- History Modal -->
+<div id="historyBackdrop" class="modal-backdrop"></div>
+<div id="historyModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="historyTitle">
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
+      <strong id="historyTitle">History</strong>
+      <div style="display:flex;gap:8px;">
+        <button id="closeHistory" class="btn-alt">Close</button>
+        <button id="clearHistory" class="btn-alt" title="Clear de-duplicated history">Clear</button>
       </div>
-      <label>Role IDs (comma separated)</label>
-      <input id="mentionRoles" type="text" placeholder="12345,67890"/>
-      <label>User IDs (comma separated)</label>
-      <input id="mentionUsers" type="text" placeholder="11111,22222"/>
-    </section>
-
-    <!-- History -->
-    <section id="tab-history" class="tab-panel" role="tabpanel">
-      <div id="historyList">No history yet.</div>
-    </section>
+    </div>
+    <div id="historyList">No history yet.</div>
   </div>
 </div>
 
 <script>
 /******** elements *********/
 const tabs=[...document.querySelectorAll('.tab')];
-const panels={ webhook:gid('tab-webhook'), message:gid('tab-message'), embeds:gid('tab-embeds'), mentions:gid('tab-mentions'), history:gid('tab-history') };
+const panels={ webhook:gid('tab-webhook'), message:gid('tab-message'), embeds:gid('tab-embeds') };
 const webhookURL=gid('webhookURL'), webhookExtra=gid('webhookExtra');
 const username=gid('username'), avatarURL=gid('avatarURL');
 const content=gid('content'), contentCount=gid('contentCount');
@@ -263,6 +304,8 @@ const imageInput=gid('imageInput'), addImageBtn=gid('addImage');
 const imageList=gid('imageList'), imageThumbs=gid('imageThumbs');
 const drop=gid('drop'), fileInput=gid('fileInput'), fileGrid=gid('fileGrid');
 const historyList=gid('historyList'); const toolbar=document.querySelector('.toolbar');
+const historyBtn=gid('historyBtn'), historyModal=gid('historyModal'), historyBackdrop=gid('historyBackdrop');
+const closeHistory=gid('closeHistory'), clearHistory=gid('clearHistory');
 function gid(id){ return document.getElementById(id); }
 
 /******** state *********/
@@ -481,6 +524,8 @@ function renderHistory(){
     username.value=h.payload.username||''; avatarURL.value=h.payload.avatar_url||''; content.value=h.payload.content||'';
     embeds=(h.payload.embeds||[]).map(e=>({ title:e.title||'', description:e.description||'', color:e.color?('#'+(e.color>>>0).toString(16).padStart(6,'0')):'#5865f2', footer:e.footer?.text||'', image:e.image?.url||'', thumb:e.thumbnail?.url||'', fields:Array.isArray(e.fields)? e.fields.map(f=>({name:f.name||'', value:f.value||'', inline:!!f.inline})) : [], _imageFile:null, _thumbFile:null, _urlCache:{} }));
     embedsEl.innerHTML=''; embeds.forEach(e=> addEmbed(e)); queueRender();
+    // close modal back to Message tab
+    closeHistoryModal();
     tabs.forEach(t=> t.classList.toggle('active', t.dataset.tab==='message')); Object.values(panels).forEach(p=> p.classList.remove('active')); panels.message.classList.add('active');
   }));
   historyList.querySelectorAll('[data-resend]').forEach(b=> b.addEventListener('click',async()=>{
@@ -489,6 +534,15 @@ function renderHistory(){
     }catch(e){ showResp('Network error: '+e.message,false); }
   }));
 }
+function clearHistoryData(){ localStorage.removeItem(HIST_KEY); renderHistory(); }
+
+/******** modal open/close *********/
+function openHistoryModal(){ historyBackdrop.style.display='block'; historyModal.style.display='block'; renderHistory(); }
+function closeHistoryModal(){ historyBackdrop.style.display='none'; historyModal.style.display='none'; }
+historyBtn.addEventListener('click', openHistoryModal);
+closeHistory.addEventListener('click', closeHistoryModal);
+historyBackdrop.addEventListener('click', closeHistoryModal);
+clearHistory.addEventListener('click', clearHistoryData);
 
 /******** send *********/
 function parseWebhookList(){ const list=[]; const main=webhookURL.value.trim(); if(main) list.push(main); (webhookExtra.value||'').split('\n').map(s=>s.trim()).filter(Boolean).forEach(u=> list.push(u)); return [...new Set(list)]; }
@@ -521,8 +575,10 @@ async function sendPayload(){
 fabSend?.addEventListener('click', sendPayload);
 
 /******** init *********/
-function renderImagesInit(){ imageList.innerHTML=''; imageThumbs.innerHTML=''; }
-renderImagesInit(); renderFiles(); renderHistory(); renderPreview();
+(function init(){
+  imageList.innerHTML=''; imageThumbs.innerHTML='';
+  renderFiles(); renderPreview(); renderHistory();
+})();
 </script>
 </body>
 </html>
