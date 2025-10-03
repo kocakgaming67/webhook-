@@ -5,29 +5,75 @@
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>Discord Webhook Manager — Touch First + Files/History/Mentions</title>
 <style>
+/* =========================
+   THEME VARIABLES (default = Blue)
+   ========================= */
 :root{
+  /* Accent + text */
   --accent:#5865f2; --accent-press:#4752c4;
-  --glass:#ffffff24; --stroke:#ffffff30;
   --text:#e8eeff; --muted:#cbd5e1;
+
+  /* Surfaces */
+  --glass:#ffffff24; --stroke:#ffffff30;
+
+  /* Shape */
   --radius:16px;
+
+  /* Background system (Blue) */
+  --bg1:#6ee7ff18; --bg2:#8b5cf61a;
+  --bgTop:#0a0f19; --bgMid:#0b1120; --bgBot:#0a0f19;
+
+  /* Animated blobs (Blue) */
+  --blob1:#60a5fa; --blob2:#a78bfa;
 }
+
+/* ---- RED THEME ---- */
+body[data-theme="red"]{
+  --accent:#ef4444; --accent-press:#b91c1c;
+  --text:#ffecec; --muted:#f9d3d3;
+
+  --glass:#ffffff22; --stroke:#ffffff2a;
+
+  --bg1:#fb718518; --bg2:#f59e0b1a;
+  --bgTop:#180a0a; --bgMid:#1c0b0b; --bgBot:#180a0a;
+
+  --blob1:#f87171; --blob2:#f59e0b;
+}
+
+/* ---- WHITE THEME (light) ---- */
+body[data-theme="white"]{
+  --accent:#6366f1; --accent-press:#4f46e5;
+  --text:#0b1120; --muted:#475569;
+
+  /* Lighter glass + stroke tuned for light bg */
+  --glass:#0000000f; --stroke:#0000001f;
+
+  --bg1:#93c5fd33; --bg2:#c4b5fd33;
+  --bgTop:#f8fafc; --bgMid:#eef2ff; --bgBot:#f8fafc;
+
+  --blob1:#bfdbfe; --blob2:#ddd6fe;
+}
+
+/* =========================
+   Base + Layout
+   ========================= */
 *{box-sizing:border-box}
 html,body{height:100%}
 body{
   margin:0; font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial;
   color:var(--text);
   background:
-    radial-gradient(900px 560px at 15% -10%, #6ee7ff18, transparent 60%),
-    radial-gradient(760px 500px at 120% 30%, #8b5cf61a, transparent 50%),
-    linear-gradient(180deg,#0a0f19,#0b1120 40%,#0a0f19);
+    radial-gradient(900px 560px at 15% -10%, var(--bg1), transparent 60%),
+    radial-gradient(760px 500px at 120% 30%, var(--bg2), transparent 50%),
+    linear-gradient(180deg,var(--bgTop),var(--bgMid) 40%,var(--bgBot));
   overflow-x:hidden;
 }
 .container{ max-width:980px; margin:18px auto 120px; padding:0 14px; }
 
 /* animated blobs */
 .bg-blob,.bg-blob2{ position:fixed; width:40vmax; height:40vmax; border-radius:50%; filter:blur(60px); opacity:.2; z-index:-2; }
-.bg-blob{ background:#60a5fa; right:-18vmax; bottom:-14vmax; animation:float1 28s ease-in-out infinite; }
-.bg-blob2{ background:#a78bfa; left:-22vmax; top:-16vmax; animation:float2 32s ease-in-out infinite; }
+.bg-blob{ background:var(--blob1); right:-18vmax; bottom:-14vmax; animation:float1 28s ease-in-out infinite; }
+.bg-blob2{ background:var(--blob2); left:-22vmax; top:-16vmax; animation:float2 32s ease-in-out infinite; }
 @keyframes float1{0%,100%{transform:translate(0,0)}50%{transform:translate(-4vmax,-2vmax)}}
 @keyframes float2{0%,100%{transform:translate(0,0)}50%{transform:translate(3vmax,2vmax)}}
 @media (prefers-reduced-motion: reduce){ .bg-blob,.bg-blob2{animation:none}}
@@ -46,18 +92,23 @@ body{
 /* Sticky preview */
 .preview-wrapper{ position:sticky; top:10px; z-index:30; }
 h1{ margin:4px 0 12px; font-weight:900; letter-spacing:.3px; font-size:clamp(26px,4.5vw,40px); color:#b8c6ff; }
+body[data-theme="red"] h1{ color:#ffd2d2; }
+body[data-theme="white"] h1{ color:#334155; }
 
 /* Tabs + history icon */
 .tabs{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:10px; }
 .tabs-grow{ flex:1 1 auto; display:flex; gap:10px; flex-wrap:wrap; }
 .tab{
   padding:10px 16px; border-radius:999px; cursor:pointer;
-  border:1px solid var(--stroke); color:#e7ecff;
+  border:1px solid var(--stroke); color:var(--text);
   background:linear-gradient(180deg,#ffffff22,#ffffff12);
   transition:transform .08s ease, box-shadow .15s ease, background .15s ease;
 }
+body[data-theme="white"] .tab{ background:linear-gradient(180deg,#0000000b,#00000006); }
 .tab:hover{ transform:translateY(-1px); box-shadow:0 8px 18px rgba(120,140,255,.18); }
 .tab.active{ color:#fff; border-color:transparent; background:linear-gradient(135deg,var(--accent),#7c83ff); box-shadow:0 10px 26px rgba(88,101,242,.28); }
+body[data-theme="red"] .tab.active{ background:linear-gradient(135deg,var(--accent),#fb7185); box-shadow:0 10px 26px rgba(239,68,68,.28); }
+body[data-theme="white"] .tab.active{ color:#fff; }
 .tab-panel{ display:none; margin-top:12px; }
 .tab-panel.active{ display:block; }
 .tab-panel > :first-child{ margin-top:6px; }
@@ -70,23 +121,33 @@ h1{ margin:4px 0 12px; font-weight:900; letter-spacing:.3px; font-size:clamp(26p
   background:linear-gradient(180deg,#ffffff26,#ffffff10);
   transition:transform .08s ease, box-shadow .15s ease;
 }
+body[data-theme="white"] .tab-icon{ background:linear-gradient(180deg,#00000010,#00000006); }
 .tab-icon:hover{ transform:translateY(-1px); box-shadow:0 8px 18px rgba(120,140,255,.18); }
-.tab-icon svg{ width:20px; height:20px; stroke:#e8eeff; }
+.tab-icon svg{ width:20px; height:20px; stroke:currentColor; color:var(--text); }
 
 /* Inputs */
 label{ display:block; margin:10px 0 6px; font-weight:800; color:#dfe6ff; }
+body[data-theme="red"] label{ color:#ffe2e2; }
+body[data-theme="white"] label{ color:#334155; }
 input[type="text"],input[type="url"],input[type="color"],textarea,select{
   width:100%; padding:12px 14px; border-radius:14px;
   border:1.5px solid #334155; background:linear-gradient(180deg,#0f1421,#0b111c);
-  color:#e9eefc; font-size:16px; transition:border-color .15s, box-shadow .15s;
+  color:var(--text); font-size:16px; transition:border-color .15s, box-shadow .15s;
 }
-input:focus,textarea:focus,select:focus{ outline:none; border-color:#8593ff; box-shadow:0 6px 16px rgba(147,164,255,.18); }
+body[data-theme="red"] input[type="text"], body[data-theme="red"] input[type="url"], body[data-theme="red"] textarea{
+  border-color:#5b1b1b; background:linear-gradient(180deg,#1a0c0c,#140909);
+}
+body[data-theme="white"] input[type="text"], body[data-theme="white"] input[type="url"], body[data-theme="white"] textarea, body[data-theme="white"] select{
+  border-color:#cbd5e1; background:linear-gradient(180deg,#ffffff,#f8fafc); color:#0b1120;
+}
+input:focus,textarea:focus,select:focus{ outline:none; border-color:var(--accent); box-shadow:0 6px 16px rgba(147,164,255,.18); }
 textarea{ min-height:110px; resize:vertical; }
 .counter{ font-size:12px; color:var(--muted); text-align:right; }
 
 /* Toolbar */
 .toolbar{ display:flex; gap:8px; flex-wrap:wrap; margin:6px 0 8px; }
-.tbtn{ border:1px solid var(--stroke); border-radius:10px; padding:6px 10px; background:linear-gradient(180deg,#ffffff30,#ffffff17); color:#eaf0ff; cursor:pointer; }
+.tbtn{ border:1.5px solid var(--stroke); border-radius:10px; padding:6px 10px; background:linear-gradient(180deg,#ffffff30,#ffffff17); color:var(--text); cursor:pointer; }
+body[data-theme="white"] .tbtn{ background:linear-gradient(180deg,#0000000a,#00000005); }
 .tbtn:hover{ transform:translateY(-1px); }
 
 /* Preview */
@@ -94,14 +155,17 @@ textarea{ min-height:110px; resize:vertical; }
   border:1px dashed rgba(255,255,255,.24);
   border-radius:14px; padding:12px;
   background:linear-gradient(180deg,#ffffff10,#ffffff06);
-  max-height:230px; overflow:auto; color:#ecf2ff;
+  max-height:230px; overflow:auto; color:var(--text);
 }
+body[data-theme="white"] .preview{ background:linear-gradient(180deg,#0000000a,#00000005); border-color:#0000001a; }
 .msg{ display:flex; gap:12px; align-items:flex-start; }
 .avatar{ width:44px; height:44px; border-radius:10px; object-fit:cover; }
 .name{ font-weight:900; color:#fff; }
+body[data-theme="white"] .name{ color:#0b1220; }
 .embed{ border-left:4px solid #94a3ff; padding:10px 12px; margin-top:10px; border-radius:10px; background:linear-gradient(180deg,#ffffff10,#ffffff06); }
+body[data-theme="white"] .embed{ background:linear-gradient(180deg,#0000000a,#00000005); }
 
-/* Floating actions (Send idle animation) */
+/* Floating actions */
 .fab{
   position:fixed; right:18px; bottom:18px; z-index:60;
   border:none; border-radius:999px; padding:16px 22px; font-weight:900;
@@ -134,26 +198,46 @@ textarea{ min-height:110px; resize:vertical; }
 .fab-clear:hover{ transform:translateY(-1px); box-shadow:0 16px 38px rgba(15,23,42,.55); }
 .fab-clear:active{ transform:translateY(1px); }
 
+/* NEW: Theme button (left-bottom) */
+.fab-theme{
+  position:fixed; left:18px; bottom:18px; z-index:61;
+  border:none; border-radius:999px; padding:14px 18px; font-weight:800;
+  color:#fff; font-size:14px; cursor:pointer;
+  background:linear-gradient(135deg,var(--accent),#7c83ff);
+  border:1px solid transparent;
+  box-shadow:0 12px 30px rgba(88,101,242,.35);
+  transition:transform .08s ease, box-shadow .2s ease;
+}
+body[data-theme="red"] .fab-theme{ box-shadow:0 12px 30px rgba(239,68,68,.35); }
+body[data-theme="white"] .fab-theme{ color:#fff; }
+.fab-theme:hover{ transform:translateY(-1px); }
+
 /* Buttons */
-.btn-alt{ background:linear-gradient(180deg,#ffffff30,#ffffff15); color:#eaf0ff; border:1.5px solid var(--stroke); padding:10px 12px; border-radius:12px; cursor:pointer; }
+.btn-alt{ background:linear-gradient(180deg,#ffffff30,#ffffff15); color:var(--text); border:1.5px solid var(--stroke); padding:10px 12px; border-radius:12px; cursor:pointer; }
+body[data-theme="white"] .btn-alt{ background:linear-gradient(180deg,#0000000a,#00000005); }
 .btn-alt:hover{ transform:translateY(-2px); box-shadow:0 10px 22px rgba(120,140,255,.2); }
 .btn-wide{ display:block; width:100%; text-align:center; }
 
-/* Embed editor */
-.embed-card{ border:1px solid var(--stroke); border-radius:14px; padding:12px; margin:12px 0; background:linear-gradient(180deg,#ffffff1e,#ffffff0d); }
+/* Inline group for validator */
+.inline{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+.badge{ display:inline-block; padding:4px 8px; border-radius:999px; font-size:12px; font-weight:800; border:1px solid var(--stroke); background:linear-gradient(180deg,#ffffff25,#ffffff12); }
+.badge.ok{ color:#bbf7d0; border-color:#166534; background:linear-gradient(180deg,#052e16,#052e16); }
+.badge.err{ color:#fecaca; border-color:#7f1d1d; background:linear-gradient(180deg,#3f1212,#3f1212); }
+.small{ font-size:12px; color:var(--muted); }
 
 /* DnD Files */
 .drop{ border:2px dashed rgba(255,255,255,.24); border-radius:14px; padding:18px; text-align:center; background:linear-gradient(180deg,#ffffff10,#ffffff06); }
+body[data-theme="white"] .drop{ border-color:#00000022; background:linear-gradient(180deg,#0000000a,#00000005); }
 .drop.drag{ border-color:#a5b4ff; background:linear-gradient(180deg,#a5b4ff20,#a5b4ff10); }
 .file-grid{ display:flex; flex-wrap:wrap; gap:12px; }
 .file-card{ border:1px solid var(--stroke); border-radius:12px; padding:8px; width:150px; display:flex; flex-direction:column; gap:8px; align-items:center; background:linear-gradient(180deg,#ffffff1e,#ffffff0c); }
 .file-card img{ width:100%; height:96px; object-fit:cover; border-radius:10px; }
-.file-card .name{ font-size:12px; text-align:center; color:#e8eeff; }
+.file-card .name{ font-size:12px; text-align:center; color:var(--text); }
 .file-card button{ border:none; background:#ef4444; color:#fff; border-radius:9px; padding:4px 8px; cursor:pointer; }
 
 /* Pills for message images */
 .pills{ display:flex; flex-wrap:wrap; gap:8px; }
-.pill{ display:flex; gap:8px; align-items:center; border:1px solid var(--stroke); border-radius:999px; padding:6px 12px; background:linear-gradient(180deg,#ffffff26,#ffffff12); color:#eaf0ff; }
+.pill{ display:flex; gap:8px; align-items:center; border:1px solid var(--stroke); border-radius:999px; padding:6px 12px; background:linear-gradient(180deg,#ffffff26,#ffffff12); color:var(--text); }
 .pill button{ border:none; background:#ef4444; color:#fff; border-radius:999px; padding:4px 6px; cursor:pointer; }
 .thumb{ width:78px; height:78px; object-fit:cover; border-radius:10px; border:1px solid var(--stroke); }
 
@@ -165,9 +249,8 @@ textarea{ min-height:110px; resize:vertical; }
 /* Fields UI */
 .field-list{ display:flex; flex-direction:column; gap:8px; margin-top:8px; }
 .field-item{ display:grid; grid-template-columns:1fr 1fr auto auto; gap:8px; align-items:center; border:1px solid var(--stroke); border-radius:10px; padding:8px; background:linear-gradient(180deg,#ffffff1e,#ffffff0c); }
-.field-item .mini{ display:flex; gap:8px; align-items:center; white-space:nowrap; color:#eaf0ff; }
+.field-item .mini{ display:flex; gap:8px; align-items:center; white-space:nowrap; color:var(--text); }
 .field-actions{ display:flex; gap:6px; }
-.field-item button{ border:none; border-radius:8px; padding:6px 8px; cursor:pointer; }
 
 /* History modal */
 .modal-backdrop{ position:fixed; inset:0; background:rgba(5,8,15,.55); display:none; z-index:70; }
@@ -177,14 +260,20 @@ textarea{ min-height:110px; resize:vertical; }
 #historyList .row{ display:flex; justify-content:space-between; align-items:center; gap:10px; border:1px solid var(--stroke); border-radius:12px; padding:10px 12px; background:linear-gradient(180deg,#ffffff1e,#ffffff0d); margin:8px 0; }
 #historyList .acts{ display:flex; gap:8px; }
 
-/* spacing polish */
-#tab-embeds #addEmbed.btn-wide{ width:100%; margin-top:10px; margin-bottom:8px; }
-#embeds{ margin-top:10px; }
-
+/* ---------- MOBILE FIXES ---------- */
+.twocol{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+@media (max-width:640px){
+  .twocol{ grid-template-columns:1fr !important; }
+}
+input[type="file"]{ font-size:16px; }
+input[type="file"]::file-selector-button{
+  padding:10px 14px; border-radius:10px; background:linear-gradient(180deg,#ffffff30,#ffffff15);
+  border:1.5px solid var(--stroke); color:var(--text); cursor:pointer;
+}
+input[type="file"]::file-selector-button:hover{ transform:translateY(-1px); box-shadow:0 8px 18px rgba(120,140,255,.18); }
 @media (max-width:560px){
   .field-item{ grid-template-columns:1fr; }
   .field-actions{ justify-content:flex-end; }
-  .embed-card .twocol{ display:block !important; }
   .fab-clear{ right:130px; }
 }
 </style>
@@ -197,6 +286,9 @@ textarea{ min-height:110px; resize:vertical; }
 <!-- Floating actions -->
 <button id="fabClear" class="fab-clear" title="Clear form">Clear</button>
 <button id="fabSend" class="fab" title="Send">Send</button>
+
+<!-- NEW: Theme switcher (left bottom) -->
+<button id="themeBtn" class="fab-theme" title="Change theme">Theme: Blue</button>
 
 <div class="container">
   <h1>Discord Webhook Manager</h1>
@@ -230,10 +322,18 @@ textarea{ min-height:110px; resize:vertical; }
     <!-- Webhook -->
     <section id="tab-webhook" class="tab-panel active" role="tabpanel">
       <label for="webhookURL">Webhook URL</label>
-      <input id="webhookURL" type="url" placeholder="https://discord.com/api/webhooks/..."/>
+      <div class="inline">
+        <input id="webhookURL" type="url" placeholder="https://discord.com/api/webhooks/..."/>
+        <button id="checkWebhookBtn" class="btn-alt" title="Validate this webhook">Check</button>
+      </div>
+      <div id="webhookCheck" class="small" style="margin-top:6px"></div>
 
       <label for="webhookExtra" style="margin-top:12px;">Additional webhooks (one per line)</label>
       <textarea id="webhookExtra" placeholder="" style="height:90px"></textarea>
+      <div class="inline" style="margin-top:8px">
+        <button id="checkAllBtn" class="btn-alt" title="Validate all listed webhooks">Check All</button>
+        <span class="small">Checks URL format and fetches webhook metadata without posting a message.</span>
+      </div>
     </section>
 
     <!-- Message -->
@@ -278,7 +378,6 @@ textarea{ min-height:110px; resize:vertical; }
       <hr style="margin:14px 0; border:none; height:1px; background:#ffffff22">
       <strong>Attachments</strong>
       <div id="drop" class="drop">Drop files here or <label for="fileInput" class="btn-alt" style="display:inline-flex">browse…</label>
-        <!-- accept ANY file type -->
         <input id="fileInput" type="file" multiple style="display:none">
       </div>
       <div id="fileGrid" class="file-grid" style="margin-top:10px"></div>
@@ -324,11 +423,14 @@ const drop=gid('drop'), fileInput=gid('fileInput'), fileGrid=gid('fileGrid');
 const historyList=gid('historyList'); const toolbar=document.querySelector('.toolbar');
 const historyBtn=gid('historyBtn'), historyModal=gid('historyModal'), historyBackdrop=gid('historyBackdrop');
 const closeHistory=gid('closeHistory'), clearHistory=gid('clearHistory');
+const checkWebhookBtn=gid('checkWebhookBtn'), webhookCheck=gid('webhookCheck'), checkAllBtn=gid('checkAllBtn');
+const themeBtn=gid('themeBtn');
 function gid(id){ return document.getElementById(id); }
 
 /******** state *********/
 let embeds=[]; let msgImages=[]; let files=[];
-const HIST_KEY='discord_webhook_history_v5'; // de-duped
+const HIST_KEY='discord_webhook_history_v5';
+const THEME_KEY='discord_webhook_theme_v1';
 
 /******** tabs *********/
 tabs.forEach(t=>t.addEventListener('click',()=>{ tabs.forEach(x=>x.classList.remove('active')); t.classList.add('active'); Object.values(panels).forEach(p=>p.classList.remove('active')); panels[t.dataset.tab].classList.add('active'); }));
@@ -337,6 +439,9 @@ tabs.forEach(t=>t.addEventListener('click',()=>{ tabs.forEach(x=>x.classList.rem
 const esc=s=>String(s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
 const validUrl=u=>{ try{ const x=new URL(u); return ['http:','https:'].includes(x.protocol);}catch{ return false; } };
 function showResp(text, ok){ resp.style.display='block'; resp.textContent=text; resp.className='response '+(ok?'ok':'err'); setTimeout(()=>{ resp.style.display='none'; }, 4200); }
+
+/* webhook URL pattern for Discord (supports canary/ptb) */
+const WEBHOOK_RE = /^https:\/\/(?:(?:canary|ptb)\.)?discord\.com\/api\/webhooks\/\d+\/[A-Za-z0-9_\-]+(?:\/?|\?.*)$/;
 
 /******** toolbar *********/
 toolbar.addEventListener('click',e=>{
@@ -353,7 +458,7 @@ function queueRender(){ if(renderQueued) return; renderQueued=true; requestAnima
 
 function renderPreview(){
   const name=esc(username.value||'Webhook'); const avatar=esc(avatarURL.value||'https://cdn.discordapp.com/embed/avatars/0.png'); const msg=esc(content.value||'');
-  const n=(content.value||'').length; contentCount.textContent=`${n} / 2000`; contentCount.style.color = n>2000 ? '#fecaca' : '#cbd5e1';
+  const n=(content.value||'').length; contentCount.textContent=`${n} / 2000`; contentCount.style.color = n>2000 ? '#fecaca' : 'var(--muted)';
   let html=`<div class="msg"><img class="avatar" src="${avatar}" alt="avatar"/><div><div class="name">${esc(name)}</div><div style="margin-top:6px;white-space:pre-wrap">${msg}</div></div></div>`;
   if(msgImages.length){ html += `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">` + msgImages.map(u=>`<img class="thumb" src="${esc(u)}" alt="image"/>`).join('') + `</div>`; }
   embeds.forEach(e=>{
@@ -435,7 +540,7 @@ function addEmbed(pre={}){
     <label>Title</label><input type="text" value="${esc(data.title)}" data-i="${idx}" data-f="title">
     <label>Description</label><textarea data-i="${idx}" data-f="description">${esc(data.description)}</textarea>
 
-    <div class="twocol" style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+    <div class="twocol" style="gap:10px">
       <div><label>Color</label><input type="color" value="${data.color}" data-i="${idx}" data-f="color"></div>
       <div><label>Footer</label><input type="text" placeholder="Footer text" value="${esc(data.footer)}" data-i="${idx}" data-f="footer"></div>
     </div>
@@ -443,7 +548,7 @@ function addEmbed(pre={}){
     <label>Image URL</label><input type="url" placeholder="https://…" value="${esc(data.image)}" data-i="${idx}" data-f="image">
     <label>Thumbnail URL</label><input type="url" placeholder="https://…" value="${esc(data.thumb)}" data-i="${idx}" data-f="thumb">
 
-    <div class="twocol" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:8px">
+    <div class="twocol" style="margin-top:8px; gap:10px">
       <div><label>Embed Image (file)</label><input type="file" accept="image/*" data-i="${idx}" data-fx="imgfile"></div>
       <div><label>Embed Thumbnail (file)</label><input type="file" accept="image/*" data-i="${idx}" data-fx="thumbfile"></div>
     </div>
@@ -519,7 +624,7 @@ function buildPayloadAndAttachments(){
   return { payload:p, embedAttachments: embedAtts };
 }
 
-/******** history (de-duplicated, to reduce lag) *********/
+/******** history *********/
 function payloadKey(webhook, payload){ return webhook + '|' + JSON.stringify(payload, Object.keys(payload).sort()); }
 function getHistory(){ try{ return JSON.parse(localStorage.getItem(HIST_KEY)||'[]'); }catch{ return []; } }
 function setHistory(list){ try{ localStorage.setItem(HIST_KEY, JSON.stringify(list.slice(0,100))); }catch{} }
@@ -565,20 +670,10 @@ clearHistory.addEventListener('click', clearHistoryData);
 function parseWebhookList(){ const list=[]; const main=webhookURL.value.trim(); if(main) list.push(main); (webhookExtra.value||'').split('\n').map(s=>s.trim()).filter(Boolean).forEach(u=> list.push(u)); return [...new Set(list)]; }
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 
-/* Build final file list & send as files[0..N] with payload.attachments */
-function filenameOnly(name){ return (name||'file').split('/').pop(); }
-
 async function sendToWebhook(url, payloadObj, allFiles){
   const form=new FormData();
-
-  // map files to files[0], files[1], ... and set attachments metadata
-  allFiles.forEach((att, i) => {
-    form.append(`files[${i}]`, att.file, att.name);
-  });
-  if(allFiles.length){
-    payloadObj.attachments = allFiles.map((att,i)=>({ id:i, filename:att.name || filenameOnly(att.file?.name) || `file_${i}` }));
-  }
-
+  allFiles.forEach((att, i) => { form.append(`files[${i}]`, att.file, att.name); });
+  if(allFiles.length){ payloadObj.attachments = allFiles.map((att,i)=>({ id:i, filename:att.name || (att.file?.name?.split('/').pop()) || `file_${i}` })); }
   form.append('payload_json', JSON.stringify(payloadObj));
   const r = await fetch(url,{ method:'POST', body: form });
   if(r.status===429){
@@ -590,13 +685,9 @@ async function sendToWebhook(url, payloadObj, allFiles){
 
 async function sendPayload(){
   const urls=parseWebhookList(); if(!urls.length) return showResp('Enter at least one webhook URL', false);
-
   const { payload, embedAttachments } = buildPayloadAndAttachments();
-
-  // Combine: embed-attached images/thumbnails + message-level arbitrary files
   const messageFiles = files.map(f => ({ file:f, name: filenameSafe(f.name||'file') }));
   const allFiles = [...embedAttachments, ...messageFiles];
-
   const hasAny = allFiles.length || payload.content || (payload.embeds && payload.embeds.length);
   if(!hasAny) return showResp('Add message or attachments before sending.', false);
 
@@ -626,6 +717,93 @@ function clearForm(){
   queueRender();
 }
 fabClear?.addEventListener('click', clearForm);
+
+/******** WEBHOOK VALIDATOR *********/
+function formatMeta(meta){
+  const bits=[];
+  if(meta.name) bits.push(`<span class="small">name: <strong>${esc(meta.name)}</strong></span>`);
+  if(meta.channel_id) bits.push(`<span class="small">channel_id: <strong>${esc(meta.channel_id)}</strong></span>`);
+  if(meta.guild_id) bits.push(`<span class="small">guild_id: <strong>${esc(meta.guild_id)}</strong></span>`);
+  if(meta.type!=null) bits.push(`<span class="small">type: <strong>${esc(String(meta.type))}</strong></span>`);
+  return bits.join(' • ');
+}
+
+function resultRow(url, statusEl){
+  const row=document.createElement('div');
+  row.style.marginTop='8px';
+  row.innerHTML=`<div class="inline"><span class="small" style="word-break:break-all">${esc(url)}</span> <span class="badge" id="b"></span></div><div class="small" id="d" style="margin-left:2px;margin-top:4px"></div>`;
+  statusEl.appendChild(row);
+  const b=row.querySelector('#b'), d=row.querySelector('#d');
+  return {
+    setOK: (msg, meta)=>{ b.textContent=msg||'OK'; b.classList.add('ok'); if(meta) d.innerHTML=formatMeta(meta); },
+    setErr: (msg)=>{ b.textContent=msg||'Error'; b.classList.add('err'); },
+    setWait: ()=>{ b.textContent='Checking…'; b.className='badge'; d.textContent=''; }
+  };
+}
+
+async function checkOne(url, container){
+  const row = resultRow(url, container);
+  row.setWait();
+  if(!WEBHOOK_RE.test(url)){
+    row.setErr('Invalid URL format');
+    return;
+  }
+  try{
+    const r = await fetch(url, { method:'GET', headers:{ 'accept':'application/json' } });
+    if(r.ok){
+      let meta=null; try{ meta=await r.json(); }catch{}
+      row.setOK('Valid', meta||undefined);
+    }else{
+      if(r.status===404) row.setErr('Unknown/Deleted (404)');
+      else if(r.status===401) row.setErr('Unauthorized (401)');
+      else if(r.status===403) row.setErr('Forbidden (403)');
+      else if(r.status===429){
+        let retry=null; try{ const j=await r.json(); retry=j.retry_after; }catch{}
+        row.setErr('Rate limited (429)'+(retry?` • retry in ~${Math.ceil(retry)}s`:''));
+      }else row.setErr(`HTTP ${r.status}`);
+    }
+  }catch(e){
+    row.setErr('Network/CORS blocked');
+  }
+}
+
+checkWebhookBtn?.addEventListener('click', async ()=>{
+  const url = webhookURL.value.trim();
+  webhookCheck.innerHTML='';
+  if(!url){ webhookCheck.innerHTML='<span class="badge err">Enter a URL first</span>'; return; }
+  await checkOne(url, webhookCheck);
+});
+
+checkAllBtn?.addEventListener('click', async ()=>{
+  const urls = parseWebhookList();
+  webhookCheck.innerHTML='';
+  if(!urls.length){ webhookCheck.innerHTML='<span class="badge err">No webhooks to check</span>'; return; }
+  for(const u of urls){ await checkOne(u, webhookCheck); }
+});
+
+/******** THEME SWITCHER *********/
+const THEMES=['blue','red','white'];
+function applyTheme(name){
+  const body=document.body;
+  if(name==='red') body.setAttribute('data-theme','red');
+  else if(name==='white') body.setAttribute('data-theme','white');
+  else body.removeAttribute('data-theme'); // blue = default
+  themeBtn.textContent = 'Theme: ' + (name.charAt(0).toUpperCase()+name.slice(1));
+  try{ localStorage.setItem(THEME_KEY, name); }catch{}
+}
+function nextTheme(cur){
+  const i = THEMES.indexOf(cur); return THEMES[(i+1)%THEMES.length];
+}
+themeBtn.addEventListener('click', ()=>{
+  const cur = localStorage.getItem(THEME_KEY) || 'blue';
+  applyTheme(nextTheme(cur));
+});
+
+/* init theme on load */
+(function initTheme(){
+  const saved = (localStorage.getItem(THEME_KEY)||'blue');
+  applyTheme(saved);
+})();
 
 /******** init *********/
 (function init(){
