@@ -882,14 +882,29 @@
                 return false;
             }
             
-            // Add channel button
+            // Add channel button - multiple event handlers for reliability
             const addChannelBtn = document.getElementById('add-channel-btn');
+            console.log('Add channel button found:', addChannelBtn); // Debug log
             if (addChannelBtn) {
-                addChannelBtn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    showModal();
-                });
+                // Remove any existing listeners first
+                addChannelBtn.onclick = null;
+                
+                // Add multiple event types for maximum compatibility
+                addChannelBtn.addEventListener('click', handleAddChannelClick, true);
+                addChannelBtn.addEventListener('mousedown', handleAddChannelClick, true);
+                addChannelBtn.onclick = handleAddChannelClick;
+                
+                console.log('Add channel button listeners attached'); // Debug log
+            } else {
+                console.error('Add channel button not found!');
+            }
+            
+            function handleAddChannelClick(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Add channel button clicked!'); // Debug log
+                showModal();
+                return false;
             }
             
             // Browse files button - multiple event handlers for reliability
@@ -1791,5 +1806,5 @@
         // Initialize the app
         initializeApp();
     </script>
- <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'99728fbf865dfda3',t:'MTc2MTkwNzUxMi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9972bcc805aafdba',t:'MTc2MTkwOTM1Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
