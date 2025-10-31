@@ -390,16 +390,26 @@
     <h1 id="app-title" class="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">Discord Webhook Manager</h1>
    </div><!-- Channel Management Section -->
    <div class="glass rounded-2xl p-4 md:p-6 section-spacing animate-slide-left">
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-     <h2 class="text-xl md:text-2xl font-bold text-white/90 flex items-center gap-3">
-      <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-       <svg width="16" height="16" viewbox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10 4H4C2.89543 4 2 4.89543 2 6V18C2 19.1046 2.89543 20 4 20H20C21.1046 20 22 19.1046 22 18V8C22 6.89543 21.1046 6 20 6H12L10 4Z" fill="white" />
-       </svg>
-      </div><span class="hidden sm:inline">Channel Manager</span> <span class="sm:hidden">Channels</span> <span id="channel-count" class="text-sm bg-blue-500/20 px-3 py-1 rounded-full">0 channels</span></h2><button id="add-channel-btn" class="btn-primary px-4 py-2 rounded-xl font-medium flex items-center justify-center gap-2 hover:scale-105 transition-transform w-full sm:w-auto">
-      <div class="w-5 h-5 bg-white/20 rounded-md flex items-center justify-center">
-       <svg width="12" height="12" viewbox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 5V19M5 12H19" stroke="white" stroke-width="2" stroke-linecap="round" />
-       </svg>
-      </div> Add Channel </button>
+    <div class="flex flex-col gap-4 mb-6">
+     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <h2 class="text-xl md:text-2xl font-bold text-white/90 flex items-center gap-3">
+       <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+        <svg width="16" height="16" viewbox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10 4H4C2.89543 4 2 4.89543 2 6V18C2 19.1046 2.89543 20 4 20H20C21.1046 20 22 19.1046 22 18V8C22 6.89543 21.1046 6 20 6H12L10 4Z" fill="white" />
+        </svg>
+       </div><span class="hidden sm:inline">Channel Manager</span> <span class="sm:hidden">Channels</span> <span id="channel-count" class="text-sm bg-blue-500/20 px-3 py-1 rounded-full">0 channels</span></h2><button id="add-channel-btn" class="btn-primary px-4 py-2 rounded-xl font-medium flex items-center justify-center gap-2 hover:scale-105 transition-transform w-full sm:w-auto relative z-10 cursor-pointer" style="pointer-events: auto;">
+       <div class="w-5 h-5 bg-white/20 rounded-md flex items-center justify-center">
+        <svg width="12" height="12" viewbox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 5V19M5 12H19" stroke="white" stroke-width="2" stroke-linecap="round" />
+        </svg>
+       </div> Add Channel </button>
+     </div><!-- Search and Filter Controls -->
+     <div class="flex flex-col sm:flex-row gap-3">
+      <div class="flex-1 relative"><input type="text" id="channel-search" class="w-full px-4 py-2 pl-10 glass-dark rounded-xl text-white placeholder-gray-400 border-none outline-none focus:ring-2 focus:ring-blue-500 text-sm" placeholder="Search channels...">
+       <div class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+        <svg width="16" height="16" viewbox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2" /> <path d="m21 21-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+        </svg>
+       </div>
+      </div><select id="channel-sort" class="px-4 py-2 glass-dark rounded-xl text-white border-none outline-none focus:ring-2 focus:ring-blue-500 text-sm"> <option value="recent">Recently Used</option> <option value="name">Name A-Z</option> <option value="created">Date Created</option> <option value="messages">Most Used</option> </select> <button id="filter-favorites" class="px-4 py-2 glass-dark rounded-xl text-white hover:bg-white/10 transition-all text-sm flex items-center gap-2"> <span>⭐</span> <span class="hidden sm:inline">Favorites</span> </button>
+     </div>
     </div>
     <div id="channels-container" class="space-y-3">
      <div class="text-center py-8 text-white/60">
@@ -556,8 +566,19 @@
        </div>
       </div>
      </div>
+    </div><!-- Template Management -->
+    <div class="mt-6 pt-4 border-t border-white/10">
+     <div class="flex items-center justify-between mb-4">
+      <h3 class="text-lg font-semibold text-white/90 flex items-center gap-3">
+       <div class="w-6 h-6 bg-gradient-to-br from-yellow-500 to-orange-600 rounded-lg flex items-center justify-center">
+        <svg width="14" height="14" viewbox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 2H6C4.89543 2 4 2.89543 4 4V20C4 21.1046 4.89543 22 6 22H18C19.1046 22 20 21.1046 20 20V8L14 2Z" stroke="white" stroke-width="1.5" /> <path d="M14 2V8H20" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+       </div> Quick Actions</h3>
+     </div>
+     <div class="grid grid-cols-2 sm:grid-cols-4 gap-3"><button id="save-template-btn" class="glass-dark px-4 py-3 rounded-xl text-white hover:bg-white/10 transition-all text-sm flex flex-col items-center gap-2"> <span class="text-lg">💾</span> <span>Save Template</span> </button> <button id="load-template-btn" class="glass-dark px-4 py-3 rounded-xl text-white hover:bg-white/10 transition-all text-sm flex flex-col items-center gap-2"> <span class="text-lg">📂</span> <span>Load Template</span> </button> <button id="test-webhook-btn" class="glass-dark px-4 py-3 rounded-xl text-white hover:bg-white/10 transition-all text-sm flex flex-col items-center gap-2"> <span class="text-lg">🧪</span> <span>Test Webhook</span> </button> <button id="clear-form-btn" class="glass-dark px-4 py-3 rounded-xl text-white hover:bg-white/10 transition-all text-sm flex flex-col items-center gap-2"> <span class="text-lg">🗑️</span> <span>Clear Form</span> </button>
+     </div>
     </div><!-- Send Button -->
-    <div class="flex justify-center mt-6 md:mt-8 pt-4 md:pt-6 border-t border-white/10 relative z-20"><button id="send-btn" class="btn-primary px-8 md:px-12 py-3 md:py-4 rounded-xl font-semibold text-white text-base md:text-lg shadow-lg hover:shadow-xl transition-all flex items-center gap-3 cursor-pointer relative z-30 w-full sm:w-auto" style="pointer-events: auto;">
+    <div class="flex justify-center mt-6 md:mt-8 pt-4 md:pt-6 border-t border-white/10 relative z-20"><button id="send-btn" class="btn-primary px-8 md:px-12 py-3 md:py-4 rounded-xl font-semibold text-white text-base md:text-lg shadow-lg hover:shadow-xl transition-all flex items-center gap-3 cursor-pointer relative z-30 w-full sm:w-auto animate-glow" style="pointer-events: auto;">
       <div class="w-5 h-5 md:w-6 md:h-6 bg-white/20 rounded-lg flex items-center justify-center">
        <svg width="14" height="14" viewbox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4.5 16.5C3 15 3 12.5 3 12.5S3 10 4.5 8.5L12 1L19.5 8.5C21 10 21 12.5 21 12.5S21 15 19.5 16.5L12 24L4.5 16.5Z" fill="white" /> <path d="M12 8V16M8 12H16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
        </svg>
@@ -577,8 +598,18 @@
     <form id="channel-form" class="space-y-4">
      <div><label class="block text-sm font-medium mb-2 text-white/90">Channel Name</label> <input type="text" id="channel-name-input" class="w-full px-4 py-3 glass-dark rounded-xl text-white placeholder-gray-400 border-none outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., #general, #announcements" required>
      </div>
+     <div><label class="block text-sm font-medium mb-2 text-white/90">Description (Optional)</label> <input type="text" id="channel-description-input" class="w-full px-4 py-3 glass-dark rounded-xl text-white placeholder-gray-400 border-none outline-none focus:ring-2 focus:ring-blue-500" placeholder="Brief description of this channel">
+     </div>
+     <div><label class="block text-sm font-medium mb-2 text-white/90">Channel Color</label>
+      <div class="flex items-center gap-3">
+       <div class="color-picker-wrapper glass-dark"><input type="color" id="channel-color-input" value="#667eea">
+       </div><span class="text-sm text-white/70">Choose a color to identify this channel</span>
+      </div>
+     </div>
      <div><label class="block text-sm font-medium mb-2 text-white/90">Webhook URL</label> <input type="url" id="channel-webhook-input" class="w-full px-4 py-3 glass-dark rounded-xl text-white placeholder-gray-400 border-none outline-none focus:ring-2 focus:ring-blue-500" placeholder="https://discord.com/api/webhooks/..." required>
       <p class="text-xs text-white/60 mt-1">Get this from Discord: Server Settings → Integrations → Webhooks</p>
+     </div>
+     <div class="flex items-center space-x-2"><input type="checkbox" id="channel-favorite-input" class="rounded"> <label class="text-sm text-white/90">⭐ Mark as favorite</label>
      </div>
      <div class="flex gap-3 pt-4"><button type="button" id="cancel-channel" class="flex-1 px-4 py-3 glass-dark rounded-xl text-white hover:bg-white/10 transition-all"> Cancel </button> <button type="submit" class="flex-1 btn-primary px-4 py-3 rounded-xl text-white font-medium"> Add Channel </button>
      </div>
@@ -602,8 +633,14 @@
   <script>
         // Configuration
         const defaultConfig = {
-            app_title: "🚀 Discord Webhook Manager",
-            send_button_text: "🚀 Send Message"
+            app_title: "🚀 Discord Webhook Manager Pro",
+            send_button_text: "🚀 Send Message",
+            welcome_message: "Manage your Discord webhooks with ease",
+            primary_color: "#667eea",
+            secondary_color: "#764ba2",
+            accent_color: "#f093fb",
+            surface_color: "rgba(255, 255, 255, 0.1)",
+            text_color: "#ffffff"
         };
 
         let selectedFiles = [];
@@ -612,6 +649,10 @@
         let channels = [];
         let currentChannelId = null;
         let channelToDelete = null;
+        let messageTemplates = [];
+        let searchQuery = '';
+        let sortBy = 'recent';
+        let filterFavorites = false;
 
         // Data SDK Handler
         const dataHandler = {
@@ -649,33 +690,63 @@
                         document.body.style.fontFamily = `${customFont}, ${baseFontStack}`;
                         document.documentElement.style.fontSize = `${baseSize}px`;
                         
-                        // Apply colors
-                        const primaryColor = config.primary_color || "#667eea";
-                        const surfaceColor = config.surface_color || "rgba(255, 255, 255, 0.1)";
-                        const textColor = config.text_color || "#ffffff";
+                        // Apply colors with CSS custom properties
+                        const primaryColor = config.primary_color || defaultConfig.primary_color;
+                        const secondaryColor = config.secondary_color || defaultConfig.secondary_color;
+                        const accentColor = config.accent_color || defaultConfig.accent_color;
+                        const surfaceColor = config.surface_color || defaultConfig.surface_color;
+                        const textColor = config.text_color || defaultConfig.text_color;
                         
-                        document.documentElement.style.setProperty('--primary-color', primaryColor);
-                        document.documentElement.style.setProperty('--surface-color', surfaceColor);
-                        document.documentElement.style.setProperty('--text-color', textColor);
+                        // Update primary buttons
+                        document.querySelectorAll('.btn-primary').forEach(btn => {
+                            btn.style.background = `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)`;
+                        });
+                        
+                        // Update secondary buttons
+                        document.querySelectorAll('.btn-secondary').forEach(btn => {
+                            btn.style.background = `linear-gradient(135deg, ${accentColor} 0%, #f5576c 100%)`;
+                        });
+                        
+                        // Update glass surfaces
+                        document.querySelectorAll('.glass, .glass-dark').forEach(element => {
+                            element.style.background = surfaceColor;
+                        });
+                        
+                        // Update text color
+                        document.body.style.color = textColor;
                     },
                     mapToCapabilities: (config) => ({
                         recolorables: [
                             {
-                                get: () => config.primary_color || "#667eea",
+                                get: () => config.primary_color || defaultConfig.primary_color,
                                 set: (value) => {
                                     config.primary_color = value;
                                     window.elementSdk.setConfig({ primary_color: value });
                                 }
                             },
                             {
-                                get: () => config.surface_color || "rgba(255, 255, 255, 0.1)",
+                                get: () => config.secondary_color || defaultConfig.secondary_color,
+                                set: (value) => {
+                                    config.secondary_color = value;
+                                    window.elementSdk.setConfig({ secondary_color: value });
+                                }
+                            },
+                            {
+                                get: () => config.accent_color || defaultConfig.accent_color,
+                                set: (value) => {
+                                    config.accent_color = value;
+                                    window.elementSdk.setConfig({ accent_color: value });
+                                }
+                            },
+                            {
+                                get: () => config.surface_color || defaultConfig.surface_color,
                                 set: (value) => {
                                     config.surface_color = value;
                                     window.elementSdk.setConfig({ surface_color: value });
                                 }
                             },
                             {
-                                get: () => config.text_color || "#ffffff",
+                                get: () => config.text_color || defaultConfig.text_color,
                                 set: (value) => {
                                     config.text_color = value;
                                     window.elementSdk.setConfig({ text_color: value });
@@ -700,7 +771,8 @@
                     }),
                     mapToEditPanelValues: (config) => new Map([
                         ["app_title", config.app_title || defaultConfig.app_title],
-                        ["send_button_text", config.send_button_text || defaultConfig.send_button_text]
+                        ["send_button_text", config.send_button_text || defaultConfig.send_button_text],
+                        ["welcome_message", config.welcome_message || defaultConfig.welcome_message]
                     ])
                 });
             }
@@ -718,31 +790,82 @@
         // Channel Management Functions
         function renderChannels() {
             const container = document.getElementById('channels-container');
+            let filteredChannels = [...channels];
             
-            if (channels.length === 0) {
+            // Apply search filter
+            if (searchQuery) {
+                filteredChannels = filteredChannels.filter(channel => 
+                    channel.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    (channel.description && channel.description.toLowerCase().includes(searchQuery.toLowerCase()))
+                );
+            }
+            
+            // Apply favorites filter
+            if (filterFavorites) {
+                filteredChannels = filteredChannels.filter(channel => channel.is_favorite);
+            }
+            
+            // Apply sorting
+            filteredChannels.sort((a, b) => {
+                switch (sortBy) {
+                    case 'name':
+                        return a.name.localeCompare(b.name);
+                    case 'created':
+                        return new Date(b.created_at) - new Date(a.created_at);
+                    case 'messages':
+                        return (b.message_count || 0) - (a.message_count || 0);
+                    case 'recent':
+                    default:
+                        return new Date(b.last_used || b.created_at) - new Date(a.last_used || a.created_at);
+                }
+            });
+            
+            if (filteredChannels.length === 0) {
+                const emptyMessage = searchQuery || filterFavorites ? 
+                    'No channels match your filters' : 'No channels configured yet';
+                const emptySubtext = searchQuery || filterFavorites ? 
+                    'Try adjusting your search or filters' : 'Add your first channel to get started!';
+                    
                 container.innerHTML = `
                     <div class="text-center py-8 text-white/60 animate-slide-up">
                         <div class="text-4xl mb-3">📺</div>
-                        <p class="text-lg">No channels configured yet</p>
-                        <p class="text-sm">Add your first channel to get started!</p>
+                        <p class="text-lg">${emptyMessage}</p>
+                        <p class="text-sm">${emptySubtext}</p>
                     </div>
                 `;
                 return;
             }
             
-            container.innerHTML = channels.map(channel => `
+            container.innerHTML = filteredChannels.map(channel => `
                 <div class="channel-item rounded-xl p-4 flex items-center justify-between ${currentChannelId === channel.__backendId ? 'active' : ''}" 
                      data-channel-id="${channel.__backendId}">
                     <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center text-white font-bold">
+                        <div class="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold relative" 
+                             style="background: ${channel.color || '#667eea'}">
                             ${channel.name.charAt(0).toUpperCase()}
+                            ${channel.is_favorite ? '<div class="absolute -top-1 -right-1 text-xs">⭐</div>' : ''}
                         </div>
-                        <div>
-                            <div class="font-medium text-white">${escapeHtml(channel.name)}</div>
-                            <div class="text-xs text-white/60">Added ${new Date(channel.created_at).toLocaleDateString()}</div>
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2">
+                                <div class="font-medium text-white">${escapeHtml(channel.name)}</div>
+                                <div class="text-xs bg-blue-500/20 px-2 py-1 rounded text-blue-300">
+                                    ${channel.message_count || 0} msgs
+                                </div>
+                            </div>
+                            <div class="text-xs text-white/60">
+                                ${channel.description ? escapeHtml(channel.description) + ' • ' : ''}
+                                ${channel.last_used ? 
+                                    'Last used ' + new Date(channel.last_used).toLocaleDateString() : 
+                                    'Added ' + new Date(channel.created_at).toLocaleDateString()
+                                }
+                            </div>
                         </div>
                     </div>
                     <div class="flex items-center gap-2">
+                        <button class="favorite-channel-btn p-2 rounded-lg hover:bg-white/10 transition-all text-lg" 
+                                title="${channel.is_favorite ? 'Remove from favorites' : 'Add to favorites'}">
+                            ${channel.is_favorite ? '⭐' : '☆'}
+                        </button>
                         <button class="select-channel-btn px-3 py-1 bg-blue-500/20 hover:bg-blue-500/30 rounded-lg text-blue-300 text-sm transition-all">
                             Select
                         </button>
@@ -756,13 +879,20 @@
             
             // Add event listeners to channel items
             container.querySelectorAll('.select-channel-btn').forEach((btn, index) => {
-                btn.addEventListener('click', () => selectChannel(channels[index]));
+                btn.addEventListener('click', () => selectChannel(filteredChannels[index]));
+            });
+            
+            container.querySelectorAll('.favorite-channel-btn').forEach((btn, index) => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    toggleChannelFavorite(filteredChannels[index]);
+                });
             });
             
             container.querySelectorAll('.delete-channel-btn').forEach((btn, index) => {
                 btn.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    showDeleteModal(channels[index]);
+                    showDeleteModal(filteredChannels[index]);
                 });
             });
         }
@@ -789,7 +919,7 @@
             showNotification(`Selected channel: ${channel.name}`, 'success');
         }
 
-        async function addChannel(name, webhookUrl) {
+        async function addChannel(name, webhookUrl, description = '', color = '#667eea', isFavorite = false) {
             if (channels.length >= 999) {
                 showNotification('Maximum limit of 999 channels reached. Please delete some channels first.', 'error');
                 return;
@@ -799,7 +929,12 @@
                 id: Date.now().toString(),
                 name: name,
                 webhook_url: webhookUrl,
-                created_at: new Date().toISOString()
+                description: description,
+                color: color,
+                is_favorite: isFavorite,
+                created_at: new Date().toISOString(),
+                last_used: new Date().toISOString(),
+                message_count: 0
             };
             
             const result = await window.dataSdk.create(channelData);
@@ -808,6 +943,29 @@
                 closeModal();
             } else {
                 showNotification('❌ Failed to add channel', 'error');
+            }
+        }
+
+        async function toggleChannelFavorite(channel) {
+            const updatedChannel = { ...channel, is_favorite: !channel.is_favorite };
+            const result = await window.dataSdk.update(updatedChannel);
+            if (result.isOk) {
+                const action = updatedChannel.is_favorite ? 'added to' : 'removed from';
+                showNotification(`⭐ Channel ${action} favorites`, 'success');
+            } else {
+                showNotification('❌ Failed to update channel', 'error');
+            }
+        }
+
+        async function updateChannelUsage(channelId) {
+            const channel = channels.find(c => c.__backendId === channelId);
+            if (channel) {
+                const updatedChannel = { 
+                    ...channel, 
+                    last_used: new Date().toISOString(),
+                    message_count: (channel.message_count || 0) + 1
+                };
+                await window.dataSdk.update(updatedChannel);
             }
         }
 
@@ -882,30 +1040,12 @@
                 return false;
             }
             
-            // Add channel button - multiple event handlers for reliability
-            const addChannelBtn = document.getElementById('add-channel-btn');
-            console.log('Add channel button found:', addChannelBtn); // Debug log
-            if (addChannelBtn) {
-                // Remove any existing listeners first
-                addChannelBtn.onclick = null;
-                
-                // Add multiple event types for maximum compatibility
-                addChannelBtn.addEventListener('click', handleAddChannelClick, true);
-                addChannelBtn.addEventListener('mousedown', handleAddChannelClick, true);
-                addChannelBtn.onclick = handleAddChannelClick;
-                
-                console.log('Add channel button listeners attached'); // Debug log
-            } else {
-                console.error('Add channel button not found!');
-            }
-            
-            function handleAddChannelClick(e) {
+            // Add channel button - direct event listener
+            document.getElementById('add-channel-btn').addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                console.log('Add channel button clicked!'); // Debug log
                 showModal();
-                return false;
-            }
+            });
             
             // Browse files button - multiple event handlers for reliability
             const browseBtn = document.getElementById('browse-files');
@@ -1043,14 +1183,41 @@
                 }
             });
             
+            // Search and filter controls
+            document.getElementById('channel-search').addEventListener('input', (e) => {
+                searchQuery = e.target.value.trim();
+                renderChannels();
+            });
+            
+            document.getElementById('channel-sort').addEventListener('change', (e) => {
+                sortBy = e.target.value;
+                renderChannels();
+            });
+            
+            document.getElementById('filter-favorites').addEventListener('click', (e) => {
+                e.preventDefault();
+                filterFavorites = !filterFavorites;
+                e.target.classList.toggle('bg-yellow-500/20', filterFavorites);
+                renderChannels();
+            });
+            
+            // Quick action buttons
+            document.getElementById('save-template-btn').addEventListener('click', saveTemplate);
+            document.getElementById('load-template-btn').addEventListener('click', loadTemplate);
+            document.getElementById('test-webhook-btn').addEventListener('click', testWebhook);
+            document.getElementById('clear-form-btn').addEventListener('click', clearForm);
+
             // Form submissions
             document.getElementById('channel-form').addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const name = document.getElementById('channel-name-input').value.trim();
                 const webhookUrl = document.getElementById('channel-webhook-input').value.trim();
+                const description = document.getElementById('channel-description-input').value.trim();
+                const color = document.getElementById('channel-color-input').value;
+                const isFavorite = document.getElementById('channel-favorite-input').checked;
                 
                 if (!name || !webhookUrl) {
-                    showNotification('Please fill in all fields', 'error');
+                    showNotification('Please fill in required fields', 'error');
                     return;
                 }
                 
@@ -1059,7 +1226,7 @@
                     return;
                 }
                 
-                await addChannel(name, webhookUrl);
+                await addChannel(name, webhookUrl, description, color, isFavorite);
             });
 
             // Character count for simple message
@@ -1442,6 +1609,12 @@
                 
                 if (response.ok) {
                     showNotification('🎉 Message sent successfully!', 'success');
+                    
+                    // Update channel usage statistics
+                    if (currentChannelId) {
+                        await updateChannelUsage(currentChannelId);
+                    }
+                    
                     if (currentTab === 'simple') {
                         document.getElementById('simple-message').value = '';
                         updateCharCount();
@@ -1508,6 +1681,12 @@
             
             if (response.ok) {
                 showNotification('🎉 Files sent successfully!', 'success');
+                
+                // Update channel usage statistics
+                if (currentChannelId) {
+                    await updateChannelUsage(currentChannelId);
+                }
+                
                 selectedFiles = [];
                 document.getElementById('file-message').value = '';
                 document.getElementById('file-input').value = '';
@@ -1806,5 +1985,5 @@
         // Initialize the app
         initializeApp();
     </script>
- <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9972bcc805aafdba',t:'MTc2MTkwOTM1Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9972e5337580ce79',t:'MTc2MTkxMTAxMi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
