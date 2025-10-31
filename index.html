@@ -396,7 +396,7 @@
        <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
         <svg width="16" height="16" viewbox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10 4H4C2.89543 4 2 4.89543 2 6V18C2 19.1046 2.89543 20 4 20H20C21.1046 20 22 19.1046 22 18V8C22 6.89543 21.1046 6 20 6H12L10 4Z" fill="white" />
         </svg>
-       </div><span class="hidden sm:inline">Channel Manager</span> <span class="sm:hidden">Channels</span> <span id="channel-count" class="text-sm bg-blue-500/20 px-3 py-1 rounded-full">0 channels</span></h2><button id="add-channel-btn" class="btn-primary px-4 py-2 rounded-xl font-medium flex items-center justify-center gap-2 hover:scale-105 transition-transform w-full sm:w-auto relative z-10 cursor-pointer" style="pointer-events: auto;">
+       </div><span class="hidden sm:inline">Channel Manager</span> <span class="sm:hidden">Channels</span> <span id="channel-count" class="text-sm bg-blue-500/20 px-3 py-1 rounded-full">0 channels</span></h2><button id="add-channel-btn" class="btn-primary px-4 py-2 rounded-xl font-medium flex items-center justify-center gap-2 hover:scale-105 transition-transform w-full sm:w-auto relative cursor-pointer" style="pointer-events: auto !important; z-index: 999; position: relative;">
        <div class="w-5 h-5 bg-white/20 rounded-md flex items-center justify-center">
         <svg width="12" height="12" viewbox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 5V19M5 12H19" stroke="white" stroke-width="2" stroke-linecap="round" />
         </svg>
@@ -1040,12 +1040,41 @@
                 return false;
             }
             
-            // Add channel button - direct event listener
-            document.getElementById('add-channel-btn').addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                showModal();
-            });
+            // Add channel button - multiple approaches for maximum compatibility
+            const addChannelBtn = document.getElementById('add-channel-btn');
+            if (addChannelBtn) {
+                // Remove any existing listeners first
+                addChannelBtn.onclick = null;
+                
+                // Method 1: Direct onclick
+                addChannelBtn.onclick = function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Add channel button clicked via onclick');
+                    showModal();
+                    return false;
+                };
+                
+                // Method 2: addEventListener with capture
+                addChannelBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Add channel button clicked via addEventListener');
+                    showModal();
+                }, true);
+                
+                // Method 3: mousedown event as backup
+                addChannelBtn.addEventListener('mousedown', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Add channel button mousedown');
+                    showModal();
+                }, true);
+                
+                console.log('Add channel button listeners attached');
+            } else {
+                console.error('Add channel button not found!');
+            }
             
             // Browse files button - multiple event handlers for reliability
             const browseBtn = document.getElementById('browse-files');
@@ -1131,9 +1160,18 @@
                 });
             }
             
-            // Event delegation for dynamic content
+            // Global click handler for button fallbacks
             document.addEventListener('click', (e) => {
                 const target = e.target;
+                
+                // Add Channel button fallback
+                if (target.id === 'add-channel-btn' || target.closest('#add-channel-btn')) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Add channel button clicked via global handler');
+                    showModal();
+                    return false;
+                }
                 
                 // Select channel buttons
                 if (target.classList.contains('select-channel-btn')) {
@@ -1985,5 +2023,5 @@
         // Initialize the app
         initializeApp();
     </script>
- <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9972e5337580ce79',t:'MTc2MTkxMTAxMi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9972eb90b0b3893c',t:'MTc2MTkxMTI3My4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
